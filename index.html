@@ -1,0 +1,1082 @@
+<!doctype html>
+<!-- Copyright (c) 2026 Aihisa Kamijo. All rights reserved. -->
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ローンシミュレータ</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --line: #d7dde7;
+      --text: #152033;
+      --muted: #667085;
+      --balance: #1d65d8;
+      --payment: #c9332b;
+      --interest: #b7791f;
+      --accent: #0f766e;
+      --soft: #eef2f7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    main {
+      width: min(1220px, calc(100vw - 28px));
+      margin: 22px auto 44px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 24px 0 10px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 330px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(20, 31, 49, 0.05);
+    }
+
+    .controls {
+      padding: 16px;
+      position: sticky;
+      top: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 14px;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .field-label {
+      color: #344054;
+      font-size: 13px;
+      font-weight: 600;
+      margin: 2px 0 8px;
+    }
+
+    .rate-rows {
+      display: grid;
+      gap: 8px;
+    }
+
+    .rate-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 92px 40px;
+      gap: 8px;
+      align-items: end;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fafbfc;
+    }
+
+    .rate-row label {
+      margin: 0;
+      font-size: 12px;
+    }
+
+    .icon-button {
+      width: 40px;
+      min-height: 40px;
+      padding: 0;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .add-rate-button {
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 40px;
+      border: 1px solid #b9c2cf;
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: var(--text);
+      background: #ffffff;
+      font: inherit;
+    }
+
+    input:focus,
+    select:focus {
+      outline: 2px solid rgba(15, 118, 110, 0.25);
+      border-color: var(--accent);
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    button {
+      min-height: 40px;
+      border: 1px solid #aab4c2;
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: #ffffff;
+      color: #1f2937;
+      font: inherit;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    button:hover {
+      filter: brightness(0.98);
+    }
+
+    .note,
+    .error {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .error {
+      color: #b42318;
+      min-height: 20px;
+    }
+
+    .results {
+      min-width: 0;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(132px, 1fr));
+      gap: 10px;
+      padding: 16px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fafbfc;
+      padding: 10px 12px;
+      min-width: 0;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 18px;
+      overflow-wrap: anywhere;
+    }
+
+    .chart-panel {
+      margin-top: 14px;
+      padding: 12px;
+    }
+
+    .chart-wrap {
+      overflow-x: auto;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      min-width: 840px;
+      height: auto;
+      background: #ffffff;
+    }
+
+    .axis {
+      stroke: #8a94a6;
+      stroke-width: 1;
+      shape-rendering: crispEdges;
+    }
+
+    .grid {
+      stroke: #e7ebf0;
+      stroke-width: 1;
+      shape-rendering: crispEdges;
+    }
+
+    .tick-text {
+      fill: #667085;
+      font-size: 12px;
+    }
+
+    .axis-title {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .legend {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .line-balance {
+      fill: none;
+      stroke: var(--balance);
+      stroke-width: 3;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+
+    .line-payment {
+      fill: none;
+      stroke: var(--payment);
+      stroke-width: 2.5;
+      stroke-dasharray: 7 5;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+
+    .line-interest {
+      fill: none;
+      stroke: var(--interest);
+      stroke-width: 2.25;
+      stroke-dasharray: 3 5;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      padding: 9px 11px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th {
+      background: var(--soft);
+      color: #344054;
+      font-weight: 700;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    @media (max-width: 920px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        position: static;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .actions {
+        grid-template-columns: 1fr;
+      }
+
+      .rate-row {
+        grid-template-columns: 1fr;
+      }
+
+      .icon-button {
+        width: 100%;
+      }
+
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>ローンシミュレータ</h1>
+  </header>
+
+  <div class="layout">
+    <section class="panel controls" aria-label="入力条件">
+      <label>
+        借入額
+        <input id="principal" type="number" min="1" step="10000" value="35000000" inputmode="numeric">
+      </label>
+      <label>
+        借入期間（年）
+        <input id="termYears" type="number" min="1" max="80" step="1" value="35" inputmode="numeric">
+      </label>
+      <label>
+        金利シナリオ
+        <select id="scenario">
+          <option value="manual">手入力</option>
+          <option value="flat">現在金利据え置き</option>
+          <option value="plus1">現在金利 +1%</option>
+          <option value="plus2">現在金利 +2%</option>
+          <option value="plus3">現在金利 +3%</option>
+          <option value="shortPrime">短プラ連動（過去変化幅）</option>
+          <option value="stress85">過去高金利ストレス 8.5%</option>
+        </select>
+      </label>
+      <div class="field-label">金利設定（年利% + 継続年数）</div>
+      <div class="rate-rows" id="rateRows"></div>
+      <button class="add-rate-button" id="addRateRowButton" type="button">金利行を追加</button>
+      <div class="actions">
+        <button class="primary" id="updateButton" type="button">再計算</button>
+        <button id="savePngButton" type="button">PNG保存</button>
+        <button id="saveSvgButton" type="button">SVG保存</button>
+        <button id="saveCsvButton" type="button">CSV保存</button>
+      </div>
+      <p class="note" id="scenarioNote">変動金利は5年ルール・125%ルール・未払利息ありで計算します。</p>
+      <p class="error" id="errorMessage" aria-live="polite"></p>
+    </section>
+
+    <section class="results">
+      <div class="panel metrics" id="metrics" aria-label="計算結果"></div>
+
+      <section class="panel chart-panel">
+        <div class="chart-wrap">
+          <svg id="loanChart" viewBox="0 0 1120 520" role="img" aria-label="残高推移と毎月返済額"></svg>
+        </div>
+      </section>
+
+      <h2>年次サマリー</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>年</th>
+              <th>年利</th>
+              <th>月返済額</th>
+              <th>年間利息</th>
+              <th>年末元金残高</th>
+              <th>年末未払利息</th>
+            </tr>
+          </thead>
+          <tbody id="yearlyRows"></tbody>
+        </table>
+      </div>
+
+      <h2>月次明細</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>月</th>
+              <th>年</th>
+              <th>年利</th>
+              <th>予定返済額</th>
+              <th>実返済額</th>
+              <th>利息</th>
+              <th>元金</th>
+              <th>元金残高</th>
+              <th>未払利息</th>
+            </tr>
+          </thead>
+          <tbody id="monthlyRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+  const COPYRIGHT_NOTICE = "Copyright (c) 2026 Aihisa Kamijo. All rights reserved.";
+  const chart = document.getElementById("loanChart");
+  const principalInput = document.getElementById("principal");
+  const termYearsInput = document.getElementById("termYears");
+  const scenarioSelect = document.getElementById("scenario");
+  const rateRowsEl = document.getElementById("rateRows");
+  const addRateRowButton = document.getElementById("addRateRowButton");
+  const metricsEl = document.getElementById("metrics");
+  const yearlyRowsEl = document.getElementById("yearlyRows");
+  const monthlyRowsEl = document.getElementById("monthlyRows");
+  const errorEl = document.getElementById("errorMessage");
+  const scenarioNoteEl = document.getElementById("scenarioNote");
+
+  let currentRows = [];
+  let currentConfig = {};
+  const initialRatePeriods = [
+    { rate: 0.7, years: 5 },
+    { rate: 0.8, years: 10 },
+    { rate: 1.0, years: 20 },
+  ];
+  const shortPrimeBenchmarkPeriods = [
+    { delta: 0.0, years: 5 },
+    { delta: 0.15, years: 1 },
+    { delta: 0.4, years: 2 },
+    { delta: 0.2, years: 1 },
+    { delta: 0.0, years: 14 },
+    { delta: 0.15, years: 1 },
+    { delta: 0.4, years: 1 },
+    { delta: 0.65, years: 10 },
+  ];
+  const variableRuleText = "5年ルール・125%ルール・未払利息あり";
+
+  function yen(value) {
+    return `${Math.round(value).toLocaleString("ja-JP")} 円`;
+  }
+
+  function createNumberInput(className, value, step, min) {
+    const input = document.createElement("input");
+    input.className = className;
+    input.type = "number";
+    input.step = step;
+    input.min = min;
+    input.value = value;
+    input.inputMode = "decimal";
+    input.addEventListener("input", () => {
+      scenarioSelect.value = "manual";
+      currentConfig.baseRate = undefined;
+      recalculate();
+    });
+    return input;
+  }
+
+  function addRateRow(period = { rate: 1.0, years: 1 }) {
+    const row = document.createElement("div");
+    row.className = "rate-row";
+
+    const rateLabel = document.createElement("label");
+    rateLabel.textContent = "年利（%）";
+    const rateInput = createNumberInput("rate-input", period.rate, "0.01", "0");
+    rateLabel.append(rateInput);
+
+    const yearsLabel = document.createElement("label");
+    yearsLabel.textContent = "継続年数";
+    const yearsInput = createNumberInput("years-input", period.years, "1", "1");
+    yearsInput.inputMode = "numeric";
+    yearsLabel.append(yearsInput);
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "icon-button";
+    removeButton.setAttribute("aria-label", "金利行を削除");
+    removeButton.title = "金利行を削除";
+    removeButton.textContent = "-";
+    removeButton.addEventListener("click", () => {
+      if (rateRowsEl.children.length === 1) {
+        errorEl.textContent = "金利設定は1行以上必要です。";
+        return;
+      }
+      row.remove();
+      recalculate();
+    });
+
+    row.append(rateLabel, yearsLabel, removeButton);
+    rateRowsEl.append(row);
+  }
+
+  function setRateRows(periods) {
+    rateRowsEl.replaceChildren();
+    periods.forEach((period) => addRateRow(period));
+  }
+
+  function readRatePeriods() {
+    const periods = Array.from(rateRowsEl.querySelectorAll(".rate-row")).map((row, index) => {
+      const rate = Number(row.querySelector(".rate-input").value);
+      const years = Number(row.querySelector(".years-input").value);
+
+      if (!Number.isFinite(rate) || rate < 0) {
+        throw new Error(`${index + 1}行目の年利は0以上の数で入力してください。`);
+      }
+      if (!Number.isInteger(years) || years <= 0) {
+        throw new Error(`${index + 1}行目の継続年数は1以上の整数で入力してください。`);
+      }
+
+      return { rate, years };
+    });
+
+    if (periods.length === 0) {
+      throw new Error("金利設定を1行以上入力してください。");
+    }
+
+    return periods;
+  }
+
+  function expandRates(periods, termYears) {
+    const rates = [];
+
+    periods.forEach((period) => {
+      for (let year = 0; year < period.years && rates.length < termYears; year += 1) {
+        rates.push(period.rate);
+      }
+    });
+
+    while (rates.length < termYears) {
+      rates.push(periods[periods.length - 1].rate);
+    }
+
+    return rates;
+  }
+
+  function compressRates(rates) {
+    const periods = [];
+    rates.forEach((rate) => {
+      const roundedRate = Math.max(0, Number(rate.toFixed(3)));
+      const last = periods[periods.length - 1];
+      if (last && Math.abs(last.rate - roundedRate) < 0.0005) {
+        last.years += 1;
+      } else {
+        periods.push({ rate: roundedRate, years: 1 });
+      }
+    });
+    return periods;
+  }
+
+  function currentManualRate() {
+    const periods = readRatePeriods();
+    return periods[0].rate;
+  }
+
+  function buildScenarioPeriods(scenario, termYears, currentRate) {
+    if (scenario === "manual") {
+      return readRatePeriods();
+    }
+    if (scenario === "flat") {
+      return [{ rate: currentRate, years: termYears }];
+    }
+    if (scenario === "plus1" || scenario === "plus2" || scenario === "plus3") {
+      const add = Number(scenario.replace("plus", ""));
+      return [
+        { rate: currentRate, years: 5 },
+        { rate: currentRate + add, years: termYears },
+      ];
+    }
+    if (scenario === "stress85") {
+      return [
+        { rate: currentRate, years: 5 },
+        { rate: 8.5, years: termYears },
+      ];
+    }
+    if (scenario === "shortPrime") {
+      const rates = [];
+      shortPrimeBenchmarkPeriods.forEach((period) => {
+        for (let index = 0; index < period.years && rates.length < termYears; index += 1) {
+          rates.push(Math.max(0, currentRate + period.delta));
+        }
+      });
+      while (rates.length < termYears) {
+        rates.push(Math.max(0, currentRate));
+      }
+      return compressRates(rates);
+    }
+
+    return readRatePeriods();
+  }
+
+  function scenarioDescription(scenario) {
+    if (scenario === "manual") {
+      return `手入力シナリオです。変動金利は${variableRuleText}で計算します。`;
+    }
+    if (scenario === "flat") {
+      return `現在金利を全期間据え置きます。変動金利は${variableRuleText}で計算します。`;
+    }
+    if (scenario === "shortPrime") {
+      return `日銀の主要行短期プライムレートの過去変化幅を、現在入力中の金利に重ねます。変動金利は${variableRuleText}で計算します。`;
+    }
+    if (scenario === "stress85") {
+      return `5年後に8.5%へ上昇するストレスです。変動金利は${variableRuleText}で計算します。`;
+    }
+    return `5年後に金利が上昇するストレスです。変動金利は${variableRuleText}で計算します。`;
+  }
+
+  function rateForYear(rates, year) {
+    return rates[Math.min(year - 1, rates.length - 1)];
+  }
+
+  function monthlyPayment(balance, annualRate, remainingMonths) {
+    const monthlyRate = annualRate / 100 / 12;
+
+    if (Math.abs(monthlyRate) < 1e-12) {
+      return balance / remainingMonths;
+    }
+
+    return balance * monthlyRate / (1 - Math.pow(1 + monthlyRate, -remainingMonths));
+  }
+
+  function simulateLoan(principal, termYears, rates) {
+    const totalMonths = termYears * 12;
+    let balance = principal;
+    let unpaidInterest = 0;
+    let payment = 0;
+    const rows = [];
+
+    for (let month = 1; month <= totalMonths; month += 1) {
+      const year = Math.floor((month - 1) / 12) + 1;
+      const annualRate = rateForYear(rates, year);
+      const remainingMonths = totalMonths - month + 1;
+
+      if (month === 1 || (month - 1) % 60 === 0) {
+        const recalculatedPayment = monthlyPayment(balance + unpaidInterest, annualRate, remainingMonths);
+        payment = month === 1 ? recalculatedPayment : Math.min(recalculatedPayment, payment * 1.25);
+      }
+
+      const interest = balance * annualRate / 100 / 12;
+      let availablePayment = payment;
+      const paidCurrentInterest = Math.min(availablePayment, interest);
+      const unpaidGenerated = Math.max(0, interest - paidCurrentInterest);
+      availablePayment -= paidCurrentInterest;
+      unpaidInterest += unpaidGenerated;
+
+      const paidUnpaidInterest = Math.min(availablePayment, unpaidInterest);
+      unpaidInterest -= paidUnpaidInterest;
+      availablePayment -= paidUnpaidInterest;
+
+      const principalPayment = Math.min(availablePayment, balance);
+      balance = Math.max(0, balance - principalPayment);
+      const actualPayment = paidCurrentInterest + paidUnpaidInterest + principalPayment;
+
+      rows.push({
+        month,
+        year,
+        annualRate,
+        payment: actualPayment,
+        scheduledPayment: payment,
+        interest,
+        paidCurrentInterest,
+        unpaidGenerated,
+        paidUnpaidInterest,
+        principal: principalPayment,
+        balance,
+        unpaidInterest,
+        totalDebt: balance + unpaidInterest,
+      });
+    }
+
+    return rows;
+  }
+
+  function niceMax(value) {
+    if (!Number.isFinite(value) || value <= 0) return 1;
+    const exponent = Math.floor(Math.log10(value));
+    const fraction = value / Math.pow(10, exponent);
+    const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
+    return niceFraction * Math.pow(10, exponent);
+  }
+
+  function makeTicks(maxValue, count = 5) {
+    const top = niceMax(maxValue);
+    const ticks = [];
+    for (let index = 0; index <= count; index += 1) {
+      ticks.push(top * index / count);
+    }
+    return ticks;
+  }
+
+  function pointList(values, maxValue, width, padding, topPad, bottomPad) {
+    const plotWidth = width - padding.left - padding.right;
+    const plotHeight = bottomPad - topPad;
+    const denom = Math.max(1, values.length - 1);
+
+    return values.map((value, index) => {
+      const x = padding.left + plotWidth * index / denom;
+      const y = topPad + plotHeight * (1 - value / maxValue);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(" ");
+  }
+
+  function svgEl(name, attrs = {}, text = "") {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", name);
+    Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
+    if (text) el.textContent = text;
+    return el;
+  }
+
+  function drawChart(rows) {
+    const width = 1120;
+    const height = 520;
+    const padding = { left: 94, right: 98 };
+    const topPad = 56;
+    const bottomPad = 452;
+    const plotLeft = padding.left;
+    const plotRight = width - padding.right;
+    const plotWidth = plotRight - plotLeft;
+    const plotHeight = bottomPad - topPad;
+    const balances = rows.map((row) => row.totalDebt);
+    const payments = rows.map((row) => row.scheduledPayment);
+    const paidInterests = rows.map((row) => row.paidCurrentInterest + row.paidUnpaidInterest);
+    const balanceMax = niceMax(Math.max(...balances));
+    const paymentMax = niceMax(Math.max(...payments, ...paidInterests));
+    const balanceTicks = makeTicks(balanceMax);
+    const paymentTicks = makeTicks(paymentMax);
+
+    chart.replaceChildren();
+    chart.append(svgEl("rect", { x: 0, y: 0, width, height, fill: "#ffffff", rx: 8 }));
+
+    balanceTicks.forEach((tick) => {
+      const y = topPad + plotHeight * (1 - tick / balanceMax);
+      chart.append(svgEl("line", { x1: plotLeft, y1: y, x2: plotRight, y2: y, class: "grid" }));
+      chart.append(svgEl("line", { x1: plotLeft - 5, y1: y, x2: plotLeft, y2: y, class: "axis" }));
+      chart.append(svgEl("text", {
+        x: plotLeft - 10,
+        y: y + 4,
+        "text-anchor": "end",
+        class: "tick-text",
+      }, yen(tick)));
+    });
+
+    paymentTicks.forEach((tick) => {
+      const y = topPad + plotHeight * (1 - tick / paymentMax);
+      chart.append(svgEl("line", { x1: plotRight, y1: y, x2: plotRight + 5, y2: y, class: "axis" }));
+      chart.append(svgEl("text", {
+        x: plotRight + 10,
+        y: y + 4,
+        "text-anchor": "start",
+        class: "tick-text",
+      }, yen(tick)));
+    });
+
+    rows.forEach((row) => {
+      if ((row.month - 1) % 12 !== 0) return;
+      const x = plotLeft + plotWidth * (row.month - 1) / Math.max(1, rows.length - 1);
+      chart.append(svgEl("line", { x1: x, y1: topPad, x2: x, y2: bottomPad, class: "grid" }));
+      chart.append(svgEl("text", {
+        x,
+        y: 486,
+        "text-anchor": "middle",
+        class: "tick-text",
+      }, `${row.year}年`));
+    });
+
+    chart.append(svgEl("line", { x1: plotLeft, y1: bottomPad, x2: plotRight, y2: bottomPad, class: "axis" }));
+    chart.append(svgEl("line", { x1: plotLeft, y1: topPad, x2: plotLeft, y2: bottomPad, class: "axis" }));
+    chart.append(svgEl("line", { x1: plotRight, y1: topPad, x2: plotRight, y2: bottomPad, class: "axis" }));
+
+    chart.append(svgEl("text", {
+      x: plotLeft,
+      y: 26,
+      fill: "#1d65d8",
+      class: "axis-title",
+    }, "左軸: ローン残高"));
+    chart.append(svgEl("text", {
+      x: plotRight,
+      y: 26,
+      fill: "#c9332b",
+      "text-anchor": "end",
+      class: "axis-title",
+    }, "右軸: 毎月の返済額"));
+
+    chart.append(svgEl("polyline", {
+      points: pointList(balances, balanceMax, width, padding, topPad, bottomPad),
+      class: "line-balance",
+    }));
+    chart.append(svgEl("polyline", {
+      points: pointList(payments, paymentMax, width, padding, topPad, bottomPad),
+      class: "line-payment",
+    }));
+    chart.append(svgEl("polyline", {
+      points: pointList(paidInterests, paymentMax, width, padding, topPad, bottomPad),
+      class: "line-interest",
+    }));
+
+    chart.append(svgEl("line", { x1: plotLeft, y1: 507, x2: plotLeft + 34, y2: 507, class: "line-balance" }));
+    chart.append(svgEl("text", { x: plotLeft + 42, y: 511, fill: "#1d65d8", class: "legend" }, "残高"));
+    chart.append(svgEl("line", { x1: plotLeft + 110, y1: 507, x2: plotLeft + 144, y2: 507, class: "line-payment" }));
+    chart.append(svgEl("text", { x: plotLeft + 152, y: 511, fill: "#c9332b", class: "legend" }, "返済額"));
+    chart.append(svgEl("line", { x1: plotLeft + 230, y1: 507, x2: plotLeft + 264, y2: 507, class: "line-interest" }));
+    chart.append(svgEl("text", { x: plotLeft + 272, y: 511, fill: "#b7791f", class: "legend" }, "支払利息"));
+  }
+
+  function updateMetrics(rows, principal, termYears) {
+    const totalPayment = rows.reduce((sum, row) => sum + row.payment, 0);
+    const totalInterest = rows.reduce((sum, row) => sum + row.interest, 0);
+    const minPayment = Math.min(...rows.map((row) => row.scheduledPayment));
+    const maxPayment = Math.max(...rows.map((row) => row.scheduledPayment));
+    const maxUnpaidInterest = Math.max(...rows.map((row) => row.unpaidInterest));
+    const finalDebt = rows[rows.length - 1].totalDebt;
+    const items = [
+      ["借入額", yen(principal)],
+      ["借入期間", `${termYears} 年`],
+      ["総返済額", yen(totalPayment)],
+      ["総利息", yen(totalInterest)],
+      ["月返済額範囲", `${yen(minPayment)} - ${yen(maxPayment)}`],
+      ["最大未払利息", yen(maxUnpaidInterest)],
+      ["期末残債", yen(finalDebt)],
+    ];
+
+    metricsEl.replaceChildren(...items.map(([label, value]) => {
+      const div = document.createElement("div");
+      div.className = "metric";
+      const span = document.createElement("span");
+      span.textContent = label;
+      const strong = document.createElement("strong");
+      strong.textContent = value;
+      div.append(span, strong);
+      return div;
+    }));
+  }
+
+  function renderTables(rows) {
+    const years = new Map();
+    rows.forEach((row) => {
+      if (!years.has(row.year)) years.set(row.year, []);
+      years.get(row.year).push(row);
+    });
+
+    yearlyRowsEl.replaceChildren(...Array.from(years.entries()).map(([year, yearRows]) => {
+      const first = yearRows[0];
+      const last = yearRows[yearRows.length - 1];
+      const interest = yearRows.reduce((sum, row) => sum + row.interest, 0);
+      const tr = document.createElement("tr");
+      [year, `${first.annualRate.toFixed(3)}%`, yen(first.scheduledPayment), yen(interest), yen(last.balance), yen(last.unpaidInterest)].forEach((value) => {
+        const td = document.createElement("td");
+        td.textContent = value;
+        tr.append(td);
+      });
+      return tr;
+    }));
+
+    monthlyRowsEl.replaceChildren(...rows.map((row) => {
+      const tr = document.createElement("tr");
+      [
+        row.month,
+        row.year,
+        `${row.annualRate.toFixed(3)}%`,
+        yen(row.scheduledPayment),
+        yen(row.payment),
+        yen(row.interest),
+        yen(row.principal),
+        yen(row.balance),
+        yen(row.unpaidInterest),
+      ].forEach((value) => {
+        const td = document.createElement("td");
+        td.textContent = value;
+        tr.append(td);
+      });
+      return tr;
+    }));
+  }
+
+  function readInputs() {
+    const principal = Number(principalInput.value);
+    const termYears = Number(termYearsInput.value);
+    const scenario = scenarioSelect.value;
+
+    if (!Number.isFinite(principal) || principal <= 0) {
+      throw new Error("借入額は正の数で入力してください。");
+    }
+    if (!Number.isInteger(termYears) || termYears <= 0) {
+      throw new Error("借入期間は1年以上の整数で入力してください。");
+    }
+
+    const ratePeriods = readRatePeriods();
+    const rates = expandRates(ratePeriods, termYears);
+    return { principal, termYears, rates, ratePeriods, scenario };
+  }
+
+  function recalculate() {
+    try {
+      const { principal, termYears, rates, scenario } = readInputs();
+      currentRows = simulateLoan(principal, termYears, rates);
+      updateMetrics(currentRows, principal, termYears);
+      drawChart(currentRows);
+      renderTables(currentRows);
+      scenarioNoteEl.textContent = scenarioDescription(scenario);
+      errorEl.textContent = "";
+    } catch (error) {
+      errorEl.textContent = error.message;
+    }
+  }
+
+  function applyScenario() {
+    try {
+      const termYears = Number(termYearsInput.value);
+      if (!Number.isInteger(termYears) || termYears <= 0) {
+        throw new Error("借入期間は1年以上の整数で入力してください。");
+      }
+      const scenario = scenarioSelect.value;
+      currentConfig.baseRate = scenario === "manual" ? undefined : currentManualRate();
+      if (scenario !== "manual") {
+        setRateRows(buildScenarioPeriods(scenario, termYears, currentConfig.baseRate));
+      }
+      recalculate();
+    } catch (error) {
+      errorEl.textContent = error.message;
+    }
+  }
+
+  function chartSvgBlob() {
+    const clone = chart.cloneNode(true);
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+    style.textContent = `
+      .axis{stroke:#8a94a6;stroke-width:1;shape-rendering:crispEdges}
+      .grid{stroke:#e7ebf0;stroke-width:1;shape-rendering:crispEdges}
+      .tick-text{fill:#667085;font-size:12px;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      .axis-title{font-size:13px;font-weight:700;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      .legend{font-size:13px;font-weight:700;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      .line-balance{fill:none;stroke:#1d65d8;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+      .line-payment{fill:none;stroke:#c9332b;stroke-width:2.5;stroke-dasharray:7 5;stroke-linejoin:round;stroke-linecap:round}
+      .line-interest{fill:none;stroke:#b7791f;stroke-width:2.25;stroke-dasharray:3 5;stroke-linejoin:round;stroke-linecap:round}
+    `;
+    clone.insertBefore(document.createComment(` ${COPYRIGHT_NOTICE} `), clone.firstChild);
+    clone.insertBefore(style, clone.firstChild);
+    const source = new XMLSerializer().serializeToString(clone);
+    return new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function saveSvg() {
+    downloadBlob(chartSvgBlob(), "loan_chart.svg");
+  }
+
+  function savePng() {
+    const blob = chartSvgBlob();
+    const url = URL.createObjectURL(blob);
+    const image = new Image();
+
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1120;
+      canvas.height = 520;
+      const context = canvas.getContext("2d");
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((pngBlob) => {
+        if (pngBlob) downloadBlob(pngBlob, "loan_chart.png");
+      }, "image/png");
+    };
+
+    image.src = url;
+  }
+
+  function saveCsv() {
+    const headers = [
+      "month",
+      "year",
+      "annual_rate",
+      "scheduled_payment",
+      "actual_payment",
+      "interest",
+      "principal",
+      "principal_balance",
+      "unpaid_interest",
+      "total_debt",
+    ];
+    const lines = [
+      `# ${COPYRIGHT_NOTICE}`,
+      headers.join(","),
+      ...currentRows.map((row) => [
+        row.month,
+        row.year,
+        row.annualRate.toFixed(6),
+        row.scheduledPayment.toFixed(2),
+        row.payment.toFixed(2),
+        row.interest.toFixed(2),
+        row.principal.toFixed(2),
+        row.balance.toFixed(2),
+        row.unpaidInterest.toFixed(2),
+        row.totalDebt.toFixed(2),
+      ].join(",")),
+    ];
+    downloadBlob(new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" }), "loan_schedule.csv");
+  }
+
+  addRateRowButton.addEventListener("click", () => {
+    scenarioSelect.value = "manual";
+    addRateRow();
+    recalculate();
+  });
+  scenarioSelect.addEventListener("change", applyScenario);
+  document.getElementById("updateButton").addEventListener("click", recalculate);
+  document.getElementById("savePngButton").addEventListener("click", savePng);
+  document.getElementById("saveSvgButton").addEventListener("click", saveSvg);
+  document.getElementById("saveCsvButton").addEventListener("click", saveCsv);
+  principalInput.addEventListener("input", recalculate);
+  termYearsInput.addEventListener("input", () => {
+    if (scenarioSelect.value === "manual") {
+      recalculate();
+    } else {
+      const termYears = Number(termYearsInput.value);
+      if (Number.isInteger(termYears) && termYears > 0) {
+        setRateRows(buildScenarioPeriods(scenarioSelect.value, termYears, currentConfig.baseRate ?? currentManualRate()));
+      }
+      recalculate();
+    }
+  });
+
+  initialRatePeriods.forEach((period) => addRateRow(period));
+  recalculate();
+</script>
+</body>
+</html>
