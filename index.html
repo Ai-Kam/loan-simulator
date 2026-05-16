@@ -321,6 +321,14 @@
       text-align: left;
     }
 
+    .site-footer {
+      width: min(1220px, calc(100vw - 28px));
+      margin: -22px auto 32px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
     @media (max-width: 920px) {
       .layout {
         grid-template-columns: 1fr;
@@ -355,6 +363,10 @@
 
       .metrics {
         grid-template-columns: 1fr;
+      }
+
+      .site-footer {
+        text-align: left;
       }
     }
   </style>
@@ -448,6 +460,7 @@
     </section>
   </div>
 </main>
+<footer class="site-footer">Copyright (c) 2026 Aihisa Kamijo. All rights reserved.</footer>
 
 <script>
   const COPYRIGHT_NOTICE = "Copyright (c) 2026 Aihisa Kamijo. All rights reserved.";
@@ -754,7 +767,7 @@
 
   function drawChart(rows) {
     const width = 1120;
-    const height = 520;
+    const height = 544;
     const padding = { left: 94, right: 98 };
     const topPad = 56;
     const bottomPad = 452;
@@ -845,6 +858,13 @@
     chart.append(svgEl("text", { x: plotLeft + 152, y: 511, fill: "#c9332b", class: "legend" }, "返済額"));
     chart.append(svgEl("line", { x1: plotLeft + 230, y1: 507, x2: plotLeft + 264, y2: 507, class: "line-interest" }));
     chart.append(svgEl("text", { x: plotLeft + 272, y: 511, fill: "#b7791f", class: "legend" }, "支払利息"));
+    chart.append(svgEl("text", {
+      x: width - 18,
+      y: height - 14,
+      "text-anchor": "end",
+      fill: "#667085",
+      class: "copyright-text",
+    }, COPYRIGHT_NOTICE));
   }
 
   function updateMetrics(rows, principal, termYears) {
@@ -975,6 +995,7 @@
       .tick-text{fill:#667085;font-size:12px;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
       .axis-title{font-size:13px;font-weight:700;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
       .legend{font-size:13px;font-weight:700;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      .copyright-text{font-size:11px;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
       .line-balance{fill:none;stroke:#1d65d8;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
       .line-payment{fill:none;stroke:#c9332b;stroke-width:2.5;stroke-dasharray:7 5;stroke-linejoin:round;stroke-linecap:round}
       .line-interest{fill:none;stroke:#b7791f;stroke-width:2.25;stroke-dasharray:3 5;stroke-linejoin:round;stroke-linecap:round}
@@ -1006,7 +1027,7 @@
     image.onload = () => {
       const canvas = document.createElement("canvas");
       canvas.width = 1120;
-      canvas.height = 520;
+      canvas.height = 544;
       const context = canvas.getContext("2d");
       context.fillStyle = "#ffffff";
       context.fillRect(0, 0, canvas.width, canvas.height);
