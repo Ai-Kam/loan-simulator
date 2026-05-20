@@ -449,7 +449,7 @@
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>年</th><th>家賃年額</th><th>住宅価値</th><th>住居費・貯蓄 合計予算</th><th>家賃上昇率</th><th>住宅価値変化率</th><th>予算上昇率</th></tr>
+              <tr><th>年</th><th>家賃年額</th><th>購入価格</th><th>購入後住宅価値</th><th>住居費・貯蓄 合計予算</th><th>家賃上昇率</th><th>購入価格変化率</th><th>購入後価値変化率</th><th>予算上昇率</th></tr>
             </thead>
             <tbody id="assumptionsRows"></tbody>
           </table>
@@ -468,7 +468,7 @@
           <table>
             <thead>
               <tr>
-                <th>購入時期</th><th>年間予算</th><th>家賃年額</th><th>賃貸時投資額</th><th>所有住居費</th><th>購入後最低余力</th><th>購入時資産</th><th>必要現金</th><th>判定</th><th>純資産差</th><th>詳細</th>
+                <th>購入時期</th><th>年間予算</th><th>家賃年額</th><th>賃貸時投資額</th><th>所有住居費</th><th>購入後最低余力</th><th>最低金融資産</th><th>購入時資産</th><th>必要現金</th><th>判定</th><th>純資産差</th><th>詳細</th>
               </tr>
             </thead>
             <tbody id="buyRows"></tbody>
@@ -531,6 +531,9 @@
       downPaymentRate: 10,
       emergencyFund: 3000000,
       annualBudget: 3960000,
+      currentAge: 45,
+      retirementAge: 65,
+      retirementAnnualBudget: 3960000,
       taxRate: 0.35,
       maintenanceRate: 0.8,
       insuranceRate: 0.1,
@@ -542,6 +545,8 @@
     assumptions: {
       rentScenario: "manual",
       rentPeriods: [{ rate: 1.0, years: 80 }],
+      marketHomeScenario: "manual",
+      marketHomePeriods: [{ rate: 0, years: 80 }],
       homeScenario: "manual",
       homePeriods: [{ rate: 0.5, years: 80 }],
       budgetScenario: "manual",
@@ -558,6 +563,11 @@
       pastStagnant: [{ rate: 0.2, years: 80 }],
     },
     home: {
+      pastRise: [{ rate: 4.0, years: 5 }, { rate: 1.0, years: 75 }],
+      pastFall: [{ rate: -3.0, years: 10 }, { rate: 0, years: 70 }],
+      pastVolatile: [{ rate: 5.0, years: 5 }, { rate: -4.0, years: 5 }, { rate: 1.0, years: 70 }],
+    },
+    marketHome: {
       pastRise: [{ rate: 4.0, years: 5 }, { rate: 1.0, years: 75 }],
       pastFall: [{ rate: -3.0, years: 10 }, { rate: 0, years: 70 }],
       pastVolatile: [{ rate: 5.0, years: 5 }, { rate: -4.0, years: 5 }, { rate: 1.0, years: 70 }],
@@ -607,6 +617,9 @@
       buyDownPaymentRate: document.getElementById("buyDownPaymentRate"),
       buyEmergencyFund: document.getElementById("buyEmergencyFund"),
       buyAnnualBudget: document.getElementById("buyAnnualBudget"),
+      buyCurrentAge: document.getElementById("buyCurrentAge"),
+      buyRetirementAge: document.getElementById("buyRetirementAge"),
+      buyRetirementAnnualBudget: document.getElementById("buyRetirementAnnualBudget"),
       buyTaxRate: document.getElementById("buyTaxRate"),
       buyMaintenanceRate: document.getElementById("buyMaintenanceRate"),
       buyInsuranceRate: document.getElementById("buyInsuranceRate"),
@@ -617,6 +630,9 @@
       rentScenario: document.getElementById("rentScenario"),
       rentRows: document.getElementById("rentRows"),
       addRentRowButton: document.getElementById("addRentRowButton"),
+      marketHomeScenario: document.getElementById("marketHomeScenario"),
+      marketHomeRows: document.getElementById("marketHomeRows"),
+      addMarketHomeRowButton: document.getElementById("addMarketHomeRowButton"),
       homeScenario: document.getElementById("homeScenario"),
       homeRows: document.getElementById("homeRows"),
       addHomeRowButton: document.getElementById("addHomeRowButton"),
@@ -673,13 +689,16 @@
     if (input.buy && input.buy.homeGrowthRate !== undefined && !input.assumptions?.homePeriods) {
       merged.assumptions.homePeriods = [{ rate: Number(input.buy.homeGrowthRate), years: 80 }];
     }
+    if (input.buy && input.buy.homeGrowthRate !== undefined && !input.assumptions?.marketHomePeriods) {
+      merged.assumptions.marketHomePeriods = [{ rate: Number(input.buy.homeGrowthRate), years: 80 }];
+    }
     if (input.buy && input.buy.budgetGrowthRate !== undefined && !input.assumptions?.budgetPeriods) {
       merged.assumptions.budgetPeriods = [{ rate: Number(input.buy.budgetGrowthRate), years: 80 }];
     }
     if (!Array.isArray(merged.loan.ratePeriods) || merged.loan.ratePeriods.length === 0) {
       merged.loan.ratePeriods = clone(defaultState.loan.ratePeriods);
     }
-    ["rent", "home", "budget"].forEach((kind) => {
+    ["rent", "marketHome", "home", "budget"].forEach((kind) => {
       const key = `${kind}Periods`;
       if (!Array.isArray(merged.assumptions[key]) || merged.assumptions[key].length === 0) {
         merged.assumptions[key] = clone(defaultState.assumptions[key]);
@@ -754,6 +773,12 @@
       pastFall: "過去型 下落",
       pastVolatile: "過去型 変動",
     },
+    marketHome: {
+      manual: "手入力",
+      pastRise: "過去型 上昇",
+      pastFall: "過去型 下落",
+      pastVolatile: "過去型 変動",
+    },
     budget: {
       manual: "手入力",
       pastWageGrowth: "過去型 賃金上昇",
@@ -779,12 +804,18 @@
       inputMarkup("buyMonthlyRent", "同等物件の月額家賃", 'type="number" min="0" step="1000" inputmode="numeric"'),
       inputMarkup("buyHomePrice", "現在住宅価格", 'type="number" min="1" step="100000" inputmode="numeric"'),
       inputMarkup("buyAnnualBudget", "住居費・貯蓄 合計予算", 'type="number" step="10000" inputmode="numeric"', true),
+      inputMarkup("buyCurrentAge", "現在年齢", 'type="number" min="0" max="100" step="1" inputmode="numeric"'),
+      inputMarkup("buyRetirementAge", "定年年齢", 'type="number" min="0" max="100" step="1" inputmode="numeric"'),
+      inputMarkup("buyRetirementAnnualBudget", "定年後 合計予算", 'type="number" min="0" step="10000" inputmode="numeric"', true),
     ];
     const householdFields = [
       inputMarkup("buyAssets", "現在金融資産", 'type="number" min="0" step="10000" inputmode="numeric"'),
       inputMarkup("buyReturnRate", "期待運用利回り（%）", 'type="number" step="0.1" inputmode="decimal"'),
       inputMarkup("buyEmergencyFund", "生活防衛資金", 'type="number" min="0" step="10000" inputmode="numeric"'),
       inputMarkup("buyAnnualBudget", "住居費・貯蓄 合計予算", 'type="number" step="10000" inputmode="numeric"'),
+      inputMarkup("buyCurrentAge", "現在年齢", 'type="number" min="0" max="100" step="1" inputmode="numeric"'),
+      inputMarkup("buyRetirementAge", "定年年齢", 'type="number" min="0" max="100" step="1" inputmode="numeric"'),
+      inputMarkup("buyRetirementAnnualBudget", "定年後 合計予算", 'type="number" min="0" step="10000" inputmode="numeric"', true),
     ];
     const ownershipCostFields = [
       inputMarkup("buyTaxRate", "固定資産税など（年率%）", 'type="number" min="0" step="0.05" inputmode="decimal"'),
@@ -798,6 +829,9 @@
       inputMarkup("buyTaxRate", "固定資産税など（年率%）", 'type="number" min="0" step="0.05" inputmode="decimal"'),
       inputMarkup("buyMaintenanceRate", "維持管理修繕（年率%）", 'type="number" min="0" step="0.05" inputmode="decimal"'),
       inputMarkup("buyInsuranceRate", "保険その他（年率%）", 'type="number" min="0" step="0.05" inputmode="decimal"'),
+      inputMarkup("buyCurrentAge", "現在年齢", 'type="number" min="0" max="100" step="1" inputmode="numeric"'),
+      inputMarkup("buyRetirementAge", "定年年齢", 'type="number" min="0" max="100" step="1" inputmode="numeric"'),
+      inputMarkup("buyRetirementAnnualBudget", "定年後 合計予算", 'type="number" min="0" step="10000" inputmode="numeric"', true),
     ];
     const assetFields = [
       inputMarkup("buyAssets", "現在金融資産", 'type="number" min="0" step="10000" inputmode="numeric"'),
@@ -808,7 +842,8 @@
     const assumptionSections = [
       sectionMarkup("基準値", fieldGrid(baseValueFields)),
       sectionMarkup("家賃推移", `${selectMarkup("rentScenario", "家賃シナリオ", [["manual", "手入力"], ["pastRise", "過去型 上昇"], ["pastInflation", "過去型 インフレ"], ["pastStagnant", "過去型 横ばい"]])}<div class="rate-rows" id="rentRows"></div><button id="addRentRowButton" type="button" style="width:100%;margin-top:8px;">家賃推移行を追加</button>`),
-      sectionMarkup("住宅価値推移", `${selectMarkup("homeScenario", "住宅価値シナリオ", [["manual", "手入力"], ["pastRise", "過去型 上昇"], ["pastFall", "過去型 下落"], ["pastVolatile", "過去型 変動"]])}<div class="rate-rows" id="homeRows"></div><button id="addHomeRowButton" type="button" style="width:100%;margin-top:8px;">住宅価値推移行を追加</button>`),
+      sectionMarkup("購入価格推移", `${selectMarkup("marketHomeScenario", "購入価格シナリオ", [["manual", "手入力"], ["pastRise", "過去型 上昇"], ["pastFall", "過去型 下落"], ["pastVolatile", "過去型 変動"]])}<div class="rate-rows" id="marketHomeRows"></div><button id="addMarketHomeRowButton" type="button" style="width:100%;margin-top:8px;">購入価格推移行を追加</button>`),
+      sectionMarkup("購入後住宅価値推移", `${selectMarkup("homeScenario", "購入後価値シナリオ", [["manual", "手入力"], ["pastRise", "過去型 上昇"], ["pastFall", "過去型 下落"], ["pastVolatile", "過去型 変動"]])}<div class="rate-rows" id="homeRows"></div><button id="addHomeRowButton" type="button" style="width:100%;margin-top:8px;">購入後価値推移行を追加</button>`),
       sectionMarkup("住居費・貯蓄 合計予算推移", `${selectMarkup("budgetScenario", "予算シナリオ", [["manual", "手入力"], ["pastWageGrowth", "過去型 賃金上昇"], ["pastStagnant", "過去型 横ばい"], ["pastSqueeze", "過去型 伸び悩み"]])}<div class="rate-rows" id="budgetRows"></div><button id="addBudgetRowButton" type="button" style="width:100%;margin-top:8px;">予算推移行を追加</button>`),
     ];
 
@@ -824,7 +859,7 @@
         sectionMarkup("賃貸比較", fieldGrid([inputMarkup("buyMonthlyRent", "同等物件の月額家賃", 'type="number" min="0" step="1000" inputmode="numeric"', true)])),
         sectionMarkup("購入・保有コスト", fieldGrid(ownershipCostFields)),
         sectionMarkup("比較期間", fieldGrid([
-          inputMarkup("buyStayYears", "居住予定年数", 'type="number" min="1" max="80" step="1" inputmode="numeric"'),
+          inputMarkup("buyStayYears", "比較終了までの年数", 'type="number" min="1" max="80" step="1" inputmode="numeric"'),
           inputMarkup("buyMaxWaitYears", "購入時期の探索年数", 'type="number" min="0" max="80" step="1" inputmode="numeric"'),
         ])),
       ],
@@ -862,6 +897,9 @@
     setInputValue(els.buyDownPaymentRate, state.buy.downPaymentRate);
     setInputValue(els.buyEmergencyFund, state.buy.emergencyFund);
     setInputValue(els.buyAnnualBudget, state.buy.annualBudget);
+    setInputValue(els.buyCurrentAge, state.buy.currentAge);
+    setInputValue(els.buyRetirementAge, state.buy.retirementAge);
+    setInputValue(els.buyRetirementAnnualBudget, state.buy.retirementAnnualBudget);
     setInputValue(els.buyTaxRate, state.buy.taxRate);
     setInputValue(els.buyMaintenanceRate, state.buy.maintenanceRate);
     setInputValue(els.buyInsuranceRate, state.buy.insuranceRate);
@@ -870,10 +908,12 @@
     setInputValue(els.buyStayYears, state.buy.stayYears);
     setInputValue(els.buyMaxWaitYears, state.buy.maxWaitYears);
     setInputValue(els.rentScenario, state.assumptions.rentScenario);
+    setInputValue(els.marketHomeScenario, state.assumptions.marketHomeScenario);
     setInputValue(els.homeScenario, state.assumptions.homeScenario);
     setInputValue(els.budgetScenario, state.assumptions.budgetScenario);
     setRateRows(state.loan.ratePeriods);
     setAssumptionRows("rent", state.assumptions.rentPeriods);
+    setAssumptionRows("marketHome", state.assumptions.marketHomePeriods);
     setAssumptionRows("home", state.assumptions.homePeriods);
     setAssumptionRows("budget", state.assumptions.budgetPeriods);
   }
@@ -894,17 +934,22 @@
     }
     if (els.buyEmergencyFund) state.buy.emergencyFund = readFinite(els.buyEmergencyFund, "生活防衛資金", { min: 0 });
     if (els.buyAnnualBudget) state.buy.annualBudget = readFinite(els.buyAnnualBudget, "住居費・貯蓄 合計予算");
+    if (els.buyCurrentAge) state.buy.currentAge = readFinite(els.buyCurrentAge, "現在年齢", { integer: true, min: 0, max: 100 });
+    if (els.buyRetirementAge) state.buy.retirementAge = readFinite(els.buyRetirementAge, "定年年齢", { integer: true, min: 0, max: 100 });
+    if (els.buyRetirementAnnualBudget) state.buy.retirementAnnualBudget = readFinite(els.buyRetirementAnnualBudget, "定年後 合計予算", { min: 0 });
     if (els.buyTaxRate) state.buy.taxRate = readFinite(els.buyTaxRate, "固定資産税など", { min: 0 });
     if (els.buyMaintenanceRate) state.buy.maintenanceRate = readFinite(els.buyMaintenanceRate, "維持管理修繕", { min: 0 });
     if (els.buyInsuranceRate) state.buy.insuranceRate = readFinite(els.buyInsuranceRate, "保険その他", { min: 0 });
     if (els.buyBuyCostRate) state.buy.buyCostRate = readFinite(els.buyBuyCostRate, "購入諸費用", { min: 0 });
     if (els.buySellCostRate) state.buy.sellCostRate = readFinite(els.buySellCostRate, "売却費用", { min: 0 });
-    if (els.buyStayYears) state.buy.stayYears = readFinite(els.buyStayYears, "居住予定年数", { integer: true, min: 1, max: 80 });
+    if (els.buyStayYears) state.buy.stayYears = readFinite(els.buyStayYears, "比較終了までの年数", { integer: true, min: 1, max: 80 });
     if (els.buyMaxWaitYears) state.buy.maxWaitYears = readFinite(els.buyMaxWaitYears, "購入時期の探索年数", { integer: true, min: 0, max: 80 });
     if (els.rentScenario) state.assumptions.rentScenario = els.rentScenario.value;
+    if (els.marketHomeScenario) state.assumptions.marketHomeScenario = els.marketHomeScenario.value;
     if (els.homeScenario) state.assumptions.homeScenario = els.homeScenario.value;
     if (els.budgetScenario) state.assumptions.budgetScenario = els.budgetScenario.value;
     state.assumptions.rentPeriods = readAssumptionPeriods("rent");
+    state.assumptions.marketHomePeriods = readAssumptionPeriods("marketHome");
     state.assumptions.homePeriods = readAssumptionPeriods("home");
     state.assumptions.budgetPeriods = readAssumptionPeriods("budget");
     if (els.cashflowPurchaseWaitYears) state.cashflow.purchaseWaitYears = Number(els.cashflowPurchaseWaitYears.value || state.cashflow.purchaseWaitYears);
@@ -1008,7 +1053,8 @@
   function assumptionConfig(kind) {
     return {
       rent: { rows: els.rentRows, scenario: els.rentScenario, label: "家賃" },
-      home: { rows: els.homeRows, scenario: els.homeScenario, label: "住宅価値" },
+      marketHome: { rows: els.marketHomeRows, scenario: els.marketHomeScenario, label: "購入価格" },
+      home: { rows: els.homeRows, scenario: els.homeScenario, label: "購入後住宅価値" },
       budget: { rows: els.budgetRows, scenario: els.budgetScenario, label: "予算" },
     }[kind];
   }
@@ -1252,10 +1298,16 @@
   }
 
   function homePriceAt(year) {
-    return valueFromAssumption(state.buy.homePrice, "home", year);
+    return valueFromAssumption(state.buy.homePrice, "marketHome", year);
+  }
+
+  function ownedHomeValueAt(waitYears, ownedYears) {
+    return valueFromAssumption(homePriceAt(waitYears), "home", ownedYears);
   }
 
   function annualBudgetAt(year) {
+    const retirementOffset = Math.max(0, state.buy.retirementAge - state.buy.currentAge);
+    if (year >= retirementOffset) return state.buy.retirementAnnualBudget;
     return valueFromAssumption(state.buy.annualBudget, "budget", year);
   }
 
@@ -1280,50 +1332,72 @@
     return assets;
   }
 
+  function annualizedHomeGrowthFromPurchase(waitYears) {
+    const ownedYears = ownedYearsForWait(waitYears);
+    const purchasePrice = homePriceAt(waitYears);
+    const salePrice = ownedHomeValueAt(waitYears, ownedYears);
+    if (purchasePrice <= 0 || ownedYears <= 0) return 0;
+    return Math.pow(salePrice / purchasePrice, 1 / ownedYears) - 1;
+  }
+
+  function maxPurchaseWaitYears() {
+    return Math.min(state.buy.maxWaitYears, Math.max(0, state.buy.stayYears - 1));
+  }
+
+  function ownedYearsForWait(waitYears) {
+    return Math.max(1, state.buy.stayYears - waitYears);
+  }
+
   function simulateBuyTiming() {
     const rows = [];
     const rates = currentRates();
     const baseLoanRate = rates[0] ?? 0;
     const operatingCostRate = annualOperatingCostRate();
-    const userCostRate = (
-      pct(state.buy.downPaymentRate) * pct(state.buy.returnRate)
-      + (1 - pct(state.buy.downPaymentRate)) * (baseLoanRate / 100)
-      + operatingCostRate
-      - pct(rateForAssumptionYear("home", 1))
-      + (pct(state.buy.buyCostRate) + pct(state.buy.sellCostRate)) / state.buy.stayYears
-    );
 
-    for (let waitYears = 0; waitYears <= state.buy.maxWaitYears; waitYears += 1) {
+    for (let waitYears = 0; waitYears <= maxPurchaseWaitYears(); waitYears += 1) {
+      const ownedYears = ownedYearsForWait(waitYears);
       const price = homePriceAt(waitYears);
+      const annualizedHomeGrowth = annualizedHomeGrowthFromPurchase(waitYears);
+      const userCostRate = (
+        pct(state.buy.downPaymentRate) * pct(state.buy.returnRate)
+        + (1 - pct(state.buy.downPaymentRate)) * (baseLoanRate / 100)
+        + operatingCostRate
+        - annualizedHomeGrowth
+        + (pct(state.buy.buyCostRate) + pct(state.buy.sellCostRate)) / ownedYears
+      );
       const annualBudget = annualBudgetAt(waitYears);
       const rent = annualRentAt(waitYears);
       const assetsAtPurchase = estimateAssetsAtPurchase(waitYears);
+      const retirementOffset = Math.max(0, state.buy.retirementAge - state.buy.currentAge);
       const downPayment = price * pct(state.buy.downPaymentRate);
       const buyCost = price * pct(state.buy.buyCostRate);
       const requiredCashBeforeEmergency = downPayment + buyCost;
       const requiredCash = requiredCashBeforeEmergency + state.buy.emergencyFund;
       const loan = Math.max(0, price - downPayment);
       const loanRows = simulateLoan(loan, state.loan.termYears, rates);
-      const annualLoanPayments = yearlyLoanPayments(loanRows, state.buy.stayYears);
+      const annualLoanPayments = yearlyLoanPayments(loanRows, ownedYears);
       const firstYearLoanPayment = annualLoanPayments[0] ?? 0;
       const annualHousingCash = firstYearLoanPayment + price * operatingCostRate;
       const rentInvest = annualBudget - rent;
       const buyInvest = annualBudget - annualHousingCash;
       let minBuyInvest = buyInvest;
-      for (let ownedYear = 0; ownedYear < state.buy.stayYears; ownedYear += 1) {
+      for (let ownedYear = 0; ownedYear < ownedYears; ownedYear += 1) {
         const globalYear = waitYears + ownedYear;
-        const futureOperatingCost = homePriceAt(globalYear) * operatingCostRate;
+        const futureOperatingCost = ownedHomeValueAt(waitYears, ownedYear) * operatingCostRate;
         const futureLoanPayment = annualLoanPayments[ownedYear] ?? 0;
         minBuyInvest = Math.min(minBuyInvest, annualBudgetAt(globalYear) - futureLoanPayment - futureOperatingCost);
       }
       const userCost = price * userCostRate;
-      const financiallyBetter = rent >= userCost;
       const hasCash = assetsAtPurchase >= requiredCash;
+      const netResult = simulateNetWorth(waitYears, { loan, requiredCashBeforeEmergency, annualLoanPayments, operatingCostRate, ownedYears });
+      const financiallyBetter = netResult.netAdvantage >= 0;
       const hasBudget = minBuyInvest >= 0;
-      const netResult = simulateNetWorth(waitYears, { loan, requiredCashBeforeEmergency, annualLoanPayments, operatingCostRate });
+      const hasRunway = netResult.minFinancialAssets >= state.buy.emergencyFund;
       rows.push({
         waitYears,
         annualBudget,
+        retirementOffset,
+        ownedYears,
         rent,
         rentInvest,
         userCost,
@@ -1335,10 +1409,12 @@
         annualHousingCash,
         buyInvest,
         minBuyInvest,
+        annualizedHomeGrowth,
         financiallyBetter,
         hasCash,
         hasBudget,
-        canBuy: financiallyBetter && hasCash && hasBudget,
+        hasRunway,
+        canBuy: financiallyBetter && hasCash && hasRunway,
         ...netResult,
       });
     }
@@ -1346,7 +1422,8 @@
   }
 
   function simulateNetWorth(waitYears, purchase) {
-    const totalYears = waitYears + state.buy.stayYears;
+    const totalYears = state.buy.stayYears;
+    const ownedYears = purchase.ownedYears;
     let rentNetWorth = state.buy.assets;
     for (let year = 0; year < totalYears; year += 1) {
       rentNetWorth = rentNetWorth * (1 + pct(state.buy.returnRate)) + (annualBudgetAt(year) - annualRentAt(year));
@@ -1357,16 +1434,18 @@
       investedAssets = investedAssets * (1 + pct(state.buy.returnRate)) + (annualBudgetAt(year) - annualRentAt(year));
     }
     investedAssets -= purchase.requiredCashBeforeEmergency;
-    for (let ownedYear = 0; ownedYear < state.buy.stayYears; ownedYear += 1) {
+    let minFinancialAssets = investedAssets;
+    for (let ownedYear = 0; ownedYear < ownedYears; ownedYear += 1) {
       const globalYear = waitYears + ownedYear;
-      const annualContribution = annualBudgetAt(globalYear) - (purchase.annualLoanPayments[ownedYear] ?? 0) - homePriceAt(globalYear) * purchase.operatingCostRate;
+      const annualContribution = annualBudgetAt(globalYear) - (purchase.annualLoanPayments[ownedYear] ?? 0) - ownedHomeValueAt(waitYears, ownedYear) * purchase.operatingCostRate;
       investedAssets = investedAssets * (1 + pct(state.buy.returnRate)) + annualContribution;
+      minFinancialAssets = Math.min(minFinancialAssets, investedAssets);
     }
-    const salePrice = homePriceAt(totalYears);
+    const salePrice = ownedHomeValueAt(waitYears, ownedYears);
     const saleCost = salePrice * pct(state.buy.sellCostRate);
-    const remainingLoan = mortgageBalanceFromRows(purchase.loan, state.loan.termYears, currentRates(), state.buy.stayYears);
+    const remainingLoan = mortgageBalanceFromRows(purchase.loan, state.loan.termYears, currentRates(), ownedYears);
     const buyNetWorth = investedAssets + salePrice - saleCost - remainingLoan;
-    return { rentNetWorth, buyNetWorth, netAdvantage: buyNetWorth - rentNetWorth, remainingLoan, salePrice };
+    return { rentNetWorth, buyNetWorth, netAdvantage: buyNetWorth - rentNetWorth, remainingLoan, salePrice, minFinancialAssets };
   }
 
   function mortgageBalanceFromRows(loan, termYears, rates, elapsedYears) {
@@ -1377,6 +1456,7 @@
   }
 
   function simulateCashflow(waitYears) {
+    const ownedYears = ownedYearsForWait(waitYears);
     const rates = currentRates();
     const price = homePriceAt(waitYears);
     const downPayment = price * pct(state.buy.downPaymentRate);
@@ -1388,17 +1468,17 @@
     const operatingCostRate = annualOperatingCostRate();
     let assets = estimateAssetsAtPurchase(waitYears) - requiredCashBeforeEmergency;
     const monthlyRows = [];
-    for (let month = 1; month <= state.buy.stayYears * 12; month += 1) {
+    for (let month = 1; month <= ownedYears * 12; month += 1) {
       const ownedYear = Math.floor((month - 1) / 12);
       const globalYear = waitYears + ownedYear;
       const loanRow = loanRows[month - 1];
       const loanPayment = loanRow ? loanRow.payment : 0;
       const principalBalance = loanRow ? loanRow.totalDebt : 0;
       const monthlyBudget = annualBudgetAt(globalYear) / 12;
-      const operatingCost = homePriceAt(globalYear) * operatingCostRate / 12;
+      const operatingCost = ownedHomeValueAt(waitYears, ownedYear) * operatingCostRate / 12;
       const monthlySurplus = monthlyBudget - loanPayment - operatingCost;
       assets = assets * (1 + monthlyReturn) + monthlySurplus;
-      const homeValue = homePriceAt(waitYears + month / 12);
+      const homeValue = ownedHomeValueAt(waitYears, month / 12);
       const netWorth = assets + homeValue - principalBalance;
       monthlyRows.push({
         month,
@@ -1415,7 +1495,7 @@
       });
     }
     const yearlyRows = [];
-    for (let year = 1; year <= state.buy.stayYears; year += 1) {
+    for (let year = 1; year <= ownedYears; year += 1) {
       const rows = monthlyRows.filter((row) => row.year === year);
       const last = rows[rows.length - 1];
       yearlyRows.push({
@@ -1436,8 +1516,9 @@
     const rentNetWorth = simulateNetWorth(waitYears, {
       loan,
       requiredCashBeforeEmergency,
-      annualLoanPayments: yearlyLoanPayments(loanRows, state.buy.stayYears),
+      annualLoanPayments: yearlyLoanPayments(loanRows, ownedYears),
       operatingCostRate,
+      ownedYears,
     }).rentNetWorth;
     return {
       waitYears,
@@ -1454,11 +1535,11 @@
   }
 
   function purchaseStatus(row) {
-    if (row.canBuy) return "可";
+    if (row.canBuy) return row.hasBudget ? "可" : "可（取崩あり）";
     const reasons = [];
-    if (!row.financiallyBetter) reasons.push("経済性未達");
+    if (!row.financiallyBetter) reasons.push("純資産差マイナス");
     if (!row.hasCash) reasons.push("資金不足");
-    if (!row.hasBudget) reasons.push("年間予算不足");
+    if (!row.hasRunway) reasons.push("投資資産不足");
     return reasons.join(" / ");
   }
 
@@ -1605,10 +1686,12 @@
       year,
       rent: annualRentAt(year),
       home: homePriceAt(year),
+      ownedHome: ownedHomeValueAt(0, year),
       budget: annualBudgetAt(year),
-      rentRate: year === 0 ? rateForAssumptionYear("rent", 1) : rateForAssumptionYear("rent", year),
-      homeRate: year === 0 ? rateForAssumptionYear("home", 1) : rateForAssumptionYear("home", year),
-      budgetRate: year === 0 ? rateForAssumptionYear("budget", 1) : rateForAssumptionYear("budget", year),
+      rentRate: year === 0 ? null : rateForAssumptionYear("rent", year),
+      homeRate: year === 0 ? null : rateForAssumptionYear("marketHome", year),
+      ownedHomeRate: year === 0 ? null : rateForAssumptionYear("home", year),
+      budgetRate: year === 0 ? null : (annualBudgetAt(year - 1) === 0 ? 0 : (annualBudgetAt(year) / annualBudgetAt(year - 1) - 1) * 100),
     }));
   }
 
@@ -1619,15 +1702,21 @@
     return assumptionScenarioLabels[kind]?.[value] ?? value;
   }
 
+  function percentOrDash(value) {
+    return value === null ? "-" : `${value.toFixed(3)}%`;
+  }
+
   function renderAssumptions() {
     const rows = assumptionRows();
     const last = rows[rows.length - 1];
     renderMetrics(document.getElementById("assumptionsMetrics"), [
       ["家賃シナリオ", scenarioLabel("rent", els.rentScenario, state.assumptions.rentScenario)],
-      ["住宅価値シナリオ", scenarioLabel("home", els.homeScenario, state.assumptions.homeScenario)],
+      ["購入価格シナリオ", scenarioLabel("marketHome", els.marketHomeScenario, state.assumptions.marketHomeScenario)],
+      ["購入後価値シナリオ", scenarioLabel("home", els.homeScenario, state.assumptions.homeScenario)],
       ["予算シナリオ", scenarioLabel("budget", els.budgetScenario, state.assumptions.budgetScenario)],
       [`${last.year}年後の家賃年額`, yen(last.rent)],
-      [`${last.year}年後の住宅価値`, yen(last.home)],
+      [`${last.year}年後の購入価格`, yen(last.home)],
+      [`今買った場合の${last.year}年後価値`, yen(last.ownedHome)],
       [`${last.year}年後の年間予算`, yen(last.budget)],
     ]);
     drawPanelChart(document.getElementById("assumptionsChart"), 1120, 620, [
@@ -1641,11 +1730,12 @@
         ],
       },
       {
-        title: "住宅価値",
+        title: "住宅: 購入価格 vs 購入後価値",
         top: 336,
         bottom: 520,
         series: [
-          { label: "住宅価値", values: rows.map((row) => row.home), className: "line-home", color: "#24715d" },
+          { label: "購入価格", values: rows.map((row) => row.home), className: "line-home", color: "#24715d" },
+          { label: "購入後価値", values: rows.map((row) => row.ownedHome), className: "line-own", color: "#b54708" },
         ],
       },
     ], rows.map((row) => `${row.year}年`));
@@ -1653,10 +1743,12 @@
       row.year,
       yen(row.rent),
       yen(row.home),
+      yen(row.ownedHome),
       yen(row.budget),
-      `${row.rentRate.toFixed(3)}%`,
-      `${row.homeRate.toFixed(3)}%`,
-      `${row.budgetRate.toFixed(3)}%`,
+      percentOrDash(row.rentRate),
+      percentOrDash(row.homeRate),
+      percentOrDash(row.ownedHomeRate),
+      percentOrDash(row.budgetRate),
     ])));
   }
 
@@ -1670,16 +1762,17 @@
     renderMetrics(document.getElementById("buyMetrics"), [
       ["現在の住居費・貯蓄 合計予算", yen(state.buy.annualBudget)],
       ["購入条件", best ? `${best.waitYears}年後` : "条件未達", best ? "good" : "warn"],
-      ["主な不可理由", best ? "なし" : purchaseStatus(firstRow), best ? "good" : "warn"],
+      ["主な不可理由", best ? (best.hasBudget ? "なし" : "取崩あり") : purchaseStatus(firstRow), best ? "good" : "warn"],
       [`${conditionRow.waitYears}年後の購入後最低余力`, yen(conditionRow.minBuyInvest), conditionRow.minBuyInvest >= 0 ? "good" : "warn"],
+      [`${conditionRow.waitYears}年後の最低金融資産`, yen(conditionRow.minFinancialAssets), conditionRow.minFinancialAssets >= state.buy.emergencyFund ? "good" : "warn"],
       ["家賃年額", yen(target.rent)],
       ["所有ユーザーコスト", yen(target.userCost)],
       [`${target.waitYears}年後購入の純資産差`, signedYen(target.netAdvantage), target.netAdvantage >= 0 ? "good" : "warn"],
-      ["比較対象年", `${target.waitYears}年後`],
+      ["比較終了年齢", `${state.buy.currentAge + state.buy.stayYears}歳`],
     ]);
     drawPanelChart(document.getElementById("buyChart"), 1120, 720, [
       {
-        title: "経済性: 家賃年額 vs 所有ユーザーコスト",
+        title: "補助指標: 家賃年額 vs 所有ユーザーコスト",
         top: 54,
         bottom: 214,
         series: [
@@ -1717,7 +1810,7 @@
         recalculate(false);
       });
       const tableRow = tr([
-        `${row.waitYears}年後`, yen(row.annualBudget), yen(row.rent), yen(row.rentInvest), yen(row.annualHousingCash), yen(row.minBuyInvest), yen(row.assetsAtPurchase), yen(row.requiredCash), purchaseStatus(row), signedYen(row.netAdvantage),
+        `${row.waitYears}年後`, yen(row.annualBudget), yen(row.rent), yen(row.rentInvest), yen(row.annualHousingCash), yen(row.minBuyInvest), yen(row.minFinancialAssets), yen(row.assetsAtPurchase), yen(row.requiredCash), purchaseStatus(row), signedYen(row.netAdvantage),
       ]);
       const td = document.createElement("td");
       td.append(action);
@@ -1730,16 +1823,19 @@
     const result = currentCashflow;
     const firstMonth = result.monthlyRows[0];
     const minMonthlySurplus = Math.min(...result.monthlyRows.map((row) => row.monthlySurplus));
+    const minAssets = Math.min(...result.monthlyRows.map((row) => row.assets));
     const finalYear = result.yearlyRows[result.yearlyRows.length - 1];
     renderMetrics(document.getElementById("cashflowMetrics"), [
       ["購入時期", `${result.waitYears}年後`],
       ["購入価格", yen(result.price)],
       ["借入額", yen(result.loan)],
+      ["購入後年数", `${ownedYearsForWait(result.waitYears)}年`],
       ["初回月返済額", yen(firstMonth.loanPayment)],
       ["最低月間余力", yen(minMonthlySurplus), minMonthlySurplus >= 0 ? "good" : "warn"],
+      ["最低金融資産", yen(minAssets), minAssets >= state.buy.emergencyFund ? "good" : "warn"],
       ["売却後純資産", yen(result.netWorthAfterSale)],
       ["賃貸継続との差額", signedYen(result.netAdvantageAfterSale), result.netAdvantageAfterSale >= 0 ? "good" : "warn"],
-      ["最終年純資産", yen(finalYear.netWorth)],
+      ["定年開始", `${Math.max(0, state.buy.retirementAge - state.buy.currentAge)}年後`],
     ]);
     drawPanelChart(document.getElementById("cashflowChart"), 1120, 620, [
       {
@@ -1781,7 +1877,7 @@
 
   function updateCashflowSelect() {
     if (!els.cashflowPurchaseWaitYears) return;
-    const max = state.buy.maxWaitYears;
+    const max = maxPurchaseWaitYears();
     const current = Math.min(Math.max(0, state.cashflow.purchaseWaitYears), max);
     state.cashflow.purchaseWaitYears = current;
     els.cashflowPurchaseWaitYears.replaceChildren(...Array.from({ length: max + 1 }, (_, year) => {
@@ -1855,17 +1951,17 @@
       return;
     }
     if (state.view === "buy") {
-      const headers = ["wait_years", "annual_budget", "annual_rent", "rent_investment", "annual_user_cost", "home_price", "assets_at_purchase", "required_cash", "annual_housing_cash", "minimum_buy_investment", "can_buy", "purchase_status", "net_advantage"];
+      const headers = ["wait_years", "annual_budget", "annual_rent", "rent_investment", "annual_user_cost", "home_price", "assets_at_purchase", "required_cash", "annual_housing_cash", "minimum_buy_investment", "minimum_financial_assets", "can_buy", "purchase_status", "net_advantage"];
       const lines = [headers.join(","), ...currentBuyRows.map((row) => [
-        row.waitYears, row.annualBudget.toFixed(2), row.rent.toFixed(2), row.rentInvest.toFixed(2), row.userCost.toFixed(2), row.price.toFixed(2), row.assetsAtPurchase.toFixed(2), row.requiredCash.toFixed(2), row.annualHousingCash.toFixed(2), row.minBuyInvest.toFixed(2), row.canBuy, purchaseStatus(row), row.netAdvantage.toFixed(2),
+        row.waitYears, row.annualBudget.toFixed(2), row.rent.toFixed(2), row.rentInvest.toFixed(2), row.userCost.toFixed(2), row.price.toFixed(2), row.assetsAtPurchase.toFixed(2), row.requiredCash.toFixed(2), row.annualHousingCash.toFixed(2), row.minBuyInvest.toFixed(2), row.minFinancialAssets.toFixed(2), row.canBuy, purchaseStatus(row), row.netAdvantage.toFixed(2),
       ].join(","))];
       downloadBlob(csvBlob(lines), "buy_timing_simulation.csv");
       return;
     }
     if (state.view === "assumptions") {
-      const headers = ["year", "annual_rent", "home_value", "annual_budget", "rent_rate", "home_rate", "budget_rate"];
+      const headers = ["year", "annual_rent", "purchase_price", "owned_home_value", "annual_budget", "rent_rate", "purchase_price_rate", "owned_home_rate", "budget_rate"];
       const lines = [headers.join(","), ...assumptionRows().map((row) => [
-        row.year, row.rent.toFixed(2), row.home.toFixed(2), row.budget.toFixed(2), row.rentRate.toFixed(6), row.homeRate.toFixed(6), row.budgetRate.toFixed(6),
+        row.year, row.rent.toFixed(2), row.home.toFixed(2), row.ownedHome.toFixed(2), row.budget.toFixed(2), row.rentRate ?? "", row.homeRate ?? "", row.ownedHomeRate ?? "", row.budgetRate ?? "",
       ].join(","))];
       downloadBlob(csvBlob(lines), "assumptions_projection.csv");
       return;
@@ -1896,6 +1992,7 @@
     });
     [
       ["rent", els.addRentRowButton],
+      ["marketHome", els.addMarketHomeRowButton],
       ["home", els.addHomeRowButton],
       ["budget", els.addBudgetRowButton],
     ].forEach(([kind, button]) => {
@@ -1906,9 +2003,9 @@
         recalculateFromInputs();
       });
     });
-    [els.rentScenario, els.homeScenario, els.budgetScenario].filter(Boolean).forEach((select) => {
+    [els.rentScenario, els.marketHomeScenario, els.homeScenario, els.budgetScenario].filter(Boolean).forEach((select) => {
       select.addEventListener("change", () => {
-        const kind = select === els.rentScenario ? "rent" : select === els.homeScenario ? "home" : "budget";
+        const kind = select === els.rentScenario ? "rent" : select === els.marketHomeScenario ? "marketHome" : select === els.homeScenario ? "home" : "budget";
         if (select.value !== "manual") {
           const periods = clone(assumptionScenarioTemplates[kind][select.value]);
           setAssumptionRows(kind, periods);
@@ -1920,6 +2017,7 @@
     [
       els.buyAssets, els.buyReturnRate, els.buyMonthlyRent,
       els.buyEmergencyFund, els.buyAnnualBudget,
+      els.buyCurrentAge, els.buyRetirementAge, els.buyRetirementAnnualBudget,
       els.buyTaxRate, els.buyMaintenanceRate, els.buyInsuranceRate, els.buyBuyCostRate,
       els.buySellCostRate, els.buyStayYears, els.buyMaxWaitYears,
     ].filter(Boolean).forEach((input) => input.addEventListener("input", recalculateFromInputs));
