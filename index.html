@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ローンシミュレータ</title>
+  <title>住宅購入・ローンシミュレータ</title>
   <style>
     :root {
       color-scheme: light;
@@ -13,16 +13,20 @@
       --line: #d7dde7;
       --text: #152033;
       --muted: #667085;
+      --accent: #0f766e;
+      --soft: #eef2f7;
       --balance: #1d65d8;
       --payment: #c9332b;
       --interest: #b7791f;
-      --accent: #0f766e;
-      --soft: #eef2f7;
+      --rent: #146c94;
+      --own: #b54708;
+      --asset: #24715d;
+      --cash: #6941c6;
+      --net: #475467;
+      --danger: #b42318;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -33,7 +37,7 @@
     }
 
     main {
-      width: min(1220px, calc(100vw - 28px));
+      width: min(1280px, calc(100vw - 28px));
       margin: 22px auto 44px;
     }
 
@@ -42,7 +46,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     h1 {
@@ -57,19 +61,39 @@
       letter-spacing: 0;
     }
 
-    a {
-      color: var(--accent);
-      font-weight: 700;
-      text-decoration: none;
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
     }
 
-    a:hover {
-      text-decoration: underline;
+    .tab-button,
+    button {
+      min-height: 40px;
+      border: 1px solid #aab4c2;
+      border-radius: 6px;
+      padding: 8px 12px;
+      background: #ffffff;
+      color: #1f2937;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
     }
+
+    .tab-button[aria-selected="true"],
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    button:hover { filter: brightness(0.98); }
 
     .layout {
       display: grid;
-      grid-template-columns: 330px minmax(0, 1fr);
+      grid-template-columns: 360px minmax(0, 1fr);
       gap: 16px;
       align-items: start;
     }
@@ -87,54 +111,29 @@
       top: 14px;
     }
 
+    .control-section { margin-top: 16px; }
+    .control-section:first-child { margin-top: 0; }
+
+    .group-title {
+      margin: 0 0 8px;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
     label {
       display: grid;
       gap: 6px;
-      margin-bottom: 14px;
       color: #344054;
       font-size: 13px;
-      font-weight: 600;
-    }
-
-    .field-label {
-      color: #344054;
-      font-size: 13px;
-      font-weight: 600;
-      margin: 2px 0 8px;
-    }
-
-    .rate-rows {
-      display: grid;
-      gap: 8px;
-    }
-
-    .rate-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 92px 40px;
-      gap: 8px;
-      align-items: end;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fafbfc;
-    }
-
-    .rate-row label {
-      margin: 0;
-      font-size: 12px;
-    }
-
-    .icon-button {
-      width: 40px;
-      min-height: 40px;
-      padding: 0;
-      font-size: 20px;
-      line-height: 1;
-    }
-
-    .add-rate-button {
-      width: 100%;
-      margin-top: 8px;
+      font-weight: 650;
+      min-width: 0;
     }
 
     input,
@@ -155,33 +154,54 @@
       border-color: var(--accent);
     }
 
+    .wide { grid-column: 1 / -1; }
+
+    .rate-rows {
+      display: grid;
+      gap: 8px;
+    }
+
+    .rate-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 92px 40px;
+      gap: 8px;
+      align-items: end;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fafbfc;
+    }
+
+    .assumption-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 92px 40px;
+      gap: 8px;
+      align-items: end;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fafbfc;
+    }
+
+    .rate-row label,
+    .assumption-row label {
+      margin: 0;
+      font-size: 12px;
+    }
+
+    .icon-button {
+      width: 40px;
+      min-height: 40px;
+      padding: 0;
+      font-size: 20px;
+      line-height: 1;
+    }
+
     .actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
       margin-top: 16px;
-    }
-
-    button {
-      min-height: 40px;
-      border: 1px solid #aab4c2;
-      border-radius: 6px;
-      padding: 8px 10px;
-      background: #ffffff;
-      color: #1f2937;
-      font: inherit;
-      font-weight: 650;
-      cursor: pointer;
-    }
-
-    button.primary {
-      border-color: var(--accent);
-      background: var(--accent);
-      color: #ffffff;
-    }
-
-    button:hover {
-      filter: brightness(0.98);
     }
 
     .note,
@@ -192,17 +212,16 @@
     }
 
     .error {
-      color: #b42318;
       min-height: 20px;
+      color: var(--danger);
     }
 
-    .results {
-      min-width: 0;
-    }
+    .view { display: none; min-width: 0; }
+    .view.active { display: block; }
 
     .metrics {
       display: grid;
-      grid-template-columns: repeat(5, minmax(132px, 1fr));
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
       gap: 10px;
       padding: 16px;
     }
@@ -228,22 +247,25 @@
       overflow-wrap: anywhere;
     }
 
+    .metric.good strong { color: var(--asset); }
+    .metric.warn strong { color: var(--own); }
+
     .chart-panel {
       margin-top: 14px;
       padding: 12px;
     }
 
-    .chart-wrap {
-      overflow-x: auto;
-    }
+    .chart-wrap { overflow-x: auto; }
 
     svg {
       display: block;
       width: 100%;
-      min-width: 840px;
+      min-width: 860px;
       height: auto;
-      background: #ffffff;
+      background: transparent;
     }
+
+    .chart-bg { fill: transparent; }
 
     .axis {
       stroke: #8a94a6;
@@ -262,41 +284,44 @@
       font-size: 12px;
     }
 
-    .axis-title {
+    .axis-title,
+    .legend,
+    .panel-title {
       font-size: 13px;
       font-weight: 700;
     }
 
-    .legend {
-      font-size: 13px;
-      font-weight: 700;
+    .panel-title {
+      fill: #344054;
+      font-weight: 800;
     }
 
-    .line-balance {
+    .line-balance,
+    .line-payment,
+    .line-interest,
+    .line-rent,
+    .line-own,
+    .line-asset,
+    .line-cash,
+    .line-net,
+    .line-budget,
+    .line-home {
       fill: none;
-      stroke: var(--balance);
-      stroke-width: 3;
+      stroke-width: 2.75;
       stroke-linejoin: round;
       stroke-linecap: round;
     }
 
-    .line-payment {
-      fill: none;
-      stroke: var(--payment);
-      stroke-width: 2.5;
-      stroke-dasharray: 7 5;
-      stroke-linejoin: round;
-      stroke-linecap: round;
-    }
-
-    .line-interest {
-      fill: none;
-      stroke: var(--interest);
-      stroke-width: 2.25;
-      stroke-dasharray: 3 5;
-      stroke-linejoin: round;
-      stroke-linecap: round;
-    }
+    .line-balance { stroke: var(--balance); stroke-width: 3; }
+    .line-payment { stroke: var(--payment); stroke-dasharray: 7 5; }
+    .line-interest { stroke: var(--interest); stroke-dasharray: 3 5; }
+    .line-rent { stroke: var(--rent); }
+    .line-own { stroke: var(--own); stroke-dasharray: 7 5; }
+    .line-asset { stroke: var(--asset); }
+    .line-cash { stroke: var(--cash); stroke-dasharray: 3 5; }
+    .line-net { stroke: var(--net); }
+    .line-budget { stroke: var(--accent); stroke-dasharray: 5 5; }
+    .line-home { stroke: var(--asset); }
 
     .table-wrap {
       overflow-x: auto;
@@ -307,7 +332,7 @@
 
     table {
       width: 100%;
-      min-width: 760px;
+      min-width: 860px;
       border-collapse: collapse;
       font-size: 14px;
     }
@@ -327,96 +352,58 @@
     }
 
     th:first-child,
-    td:first-child {
-      text-align: left;
+    td:first-child { text-align: left; }
+
+    .row-action {
+      min-height: 32px;
+      padding: 5px 8px;
+      font-size: 13px;
     }
 
     .site-footer {
-      width: min(1220px, calc(100vw - 28px));
+      width: min(1280px, calc(100vw - 28px));
       margin: -22px auto 32px;
       color: var(--muted);
       font-size: 12px;
       text-align: right;
     }
 
-    @media (max-width: 920px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-
-      .controls {
-        position: static;
-      }
-
-      .metrics {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .controls { position: static; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
-    @media (max-width: 560px) {
-      header {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .actions {
-        grid-template-columns: 1fr;
-      }
-
-      .rate-row {
-        grid-template-columns: 1fr;
-      }
-
-      .icon-button {
-        width: 100%;
-      }
-
-      .metrics {
-        grid-template-columns: 1fr;
-      }
-
-      .site-footer {
-        text-align: left;
-      }
+    @media (max-width: 620px) {
+      header { align-items: flex-start; flex-direction: column; }
+      .field-grid,
+      .actions,
+      .metrics { grid-template-columns: 1fr; }
+      .rate-row { grid-template-columns: 1fr; }
+      .icon-button { width: 100%; }
+      .site-footer { text-align: left; }
     }
   </style>
 </head>
 <body>
 <main>
   <header>
-    <h1>ローンシミュレータ</h1>
-    <a href="buy_simulator.html">購入タイミングシミュレータ</a>
+    <h1>住宅購入・ローンシミュレータ</h1>
   </header>
+
+  <nav class="tabs" aria-label="シミュレーション切替">
+    <button class="tab-button" data-view-button="loan" type="button">ローン</button>
+    <button class="tab-button" data-view-button="assumptions" type="button">前提推移</button>
+    <button class="tab-button" data-view-button="buy" type="button">購入タイミング</button>
+    <button class="tab-button" data-view-button="cashflow" type="button">購入後キャッシュフロー</button>
+  </nav>
 
   <div class="layout">
     <section class="panel controls" aria-label="入力条件">
-      <label>
-        借入額
-        <input id="principal" type="number" min="1" step="10000" value="35000000" inputmode="numeric">
-      </label>
-      <label>
-        借入期間（年）
-        <input id="termYears" type="number" min="1" max="80" step="1" value="35" inputmode="numeric">
-      </label>
-      <label>
-        金利シナリオ
-        <select id="scenario">
-          <option value="manual">手入力</option>
-          <option value="flat">現在金利据え置き</option>
-          <option value="plus1">現在金利 +1%</option>
-          <option value="plus2">現在金利 +2%</option>
-          <option value="plus3">現在金利 +3%</option>
-          <option value="shortPrime">短プラ連動（過去変化幅）</option>
-          <option value="stress85">過去高金利ストレス 8.5%</option>
-        </select>
-      </label>
-      <div class="field-label">金利設定（年利% + 継続年数）</div>
-      <div class="rate-rows" id="rateRows"></div>
-      <button class="add-rate-button" id="addRateRowButton" type="button">金利行を追加</button>
+      <div id="controlSections"></div>
+
       <div class="actions">
-        <button class="primary" id="updateButton" type="button">再計算</button>
-        <button id="savePngButton" type="button">PNG保存</button>
-        <button id="saveSvgButton" type="button">SVG保存</button>
+        <button class="primary" id="recalculateButton" type="button">再計算</button>
         <button id="saveCsvButton" type="button">CSV保存</button>
       </div>
       <p class="note" id="scenarioNote">変動金利は5年ルール・125%ルール・未払利息ありで計算します。</p>
@@ -424,50 +411,97 @@
     </section>
 
     <section class="results">
-      <div class="panel metrics" id="metrics" aria-label="計算結果"></div>
-
-      <section class="panel chart-panel">
-        <div class="chart-wrap">
-          <svg id="loanChart" viewBox="0 0 1120 520" role="img" aria-label="残高推移と毎月返済額"></svg>
+      <section class="view" id="loanView">
+        <div class="panel metrics" id="loanMetrics" aria-label="ローン計算結果"></div>
+        <section class="panel chart-panel">
+          <div class="chart-wrap">
+            <svg id="loanChart" viewBox="0 0 1120 544" role="img" aria-label="残高推移と毎月返済額"></svg>
+          </div>
+        </section>
+        <h2>年次サマリー</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>年</th><th>年利</th><th>月返済額</th><th>年間利息</th><th>年末元金残高</th><th>年末未払利息</th></tr>
+            </thead>
+            <tbody id="loanYearlyRows"></tbody>
+          </table>
+        </div>
+        <h2>月次明細</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>月</th><th>年</th><th>年利</th><th>予定返済額</th><th>実返済額</th><th>利息</th><th>元金</th><th>元金残高</th><th>未払利息</th></tr>
+            </thead>
+            <tbody id="loanMonthlyRows"></tbody>
+          </table>
         </div>
       </section>
 
-      <h2>年次サマリー</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>年</th>
-              <th>年利</th>
-              <th>月返済額</th>
-              <th>年間利息</th>
-              <th>年末元金残高</th>
-              <th>年末未払利息</th>
-            </tr>
-          </thead>
-          <tbody id="yearlyRows"></tbody>
-        </table>
-      </div>
+      <section class="view" id="assumptionsView">
+        <div class="panel metrics" id="assumptionsMetrics" aria-label="前提推移"></div>
+        <section class="panel chart-panel">
+          <div class="chart-wrap">
+            <svg id="assumptionsChart" viewBox="0 0 1120 620" role="img" aria-label="家賃、住宅価値、予算の推移"></svg>
+          </div>
+        </section>
+        <h2>前提推移テーブル</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>年</th><th>家賃年額</th><th>住宅価値</th><th>住居費・貯蓄 合計予算</th><th>家賃上昇率</th><th>住宅価値変化率</th><th>予算上昇率</th></tr>
+            </thead>
+            <tbody id="assumptionsRows"></tbody>
+          </table>
+        </div>
+      </section>
 
-      <h2>月次明細</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>月</th>
-              <th>年</th>
-              <th>年利</th>
-              <th>予定返済額</th>
-              <th>実返済額</th>
-              <th>利息</th>
-              <th>元金</th>
-              <th>元金残高</th>
-              <th>未払利息</th>
-            </tr>
-          </thead>
-          <tbody id="monthlyRows"></tbody>
-        </table>
-      </div>
+      <section class="view" id="buyView">
+        <div class="panel metrics" id="buyMetrics" aria-label="購入タイミング計算結果"></div>
+        <section class="panel chart-panel">
+          <div class="chart-wrap">
+            <svg id="buyChart" viewBox="0 0 1120 720" role="img" aria-label="購入タイミングの比較グラフ"></svg>
+          </div>
+        </section>
+        <h2>購入時期別サマリー</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>購入時期</th><th>年間予算</th><th>家賃年額</th><th>賃貸時投資額</th><th>所有住居費</th><th>購入後最低余力</th><th>購入時資産</th><th>必要現金</th><th>判定</th><th>純資産差</th><th>詳細</th>
+              </tr>
+            </thead>
+            <tbody id="buyRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="view" id="cashflowView">
+        <div class="panel metrics" id="cashflowMetrics" aria-label="購入後キャッシュフロー計算結果"></div>
+        <section class="panel chart-panel">
+          <div class="chart-wrap">
+            <svg id="cashflowChart" viewBox="0 0 1120 620" role="img" aria-label="購入後キャッシュフローグラフ"></svg>
+          </div>
+        </section>
+        <h2>年次キャッシュフロー</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>年</th><th>年間予算</th><th>ローン返済</th><th>所有維持費</th><th>投資余力</th><th>金融資産</th><th>住宅価値</th><th>残債</th><th>純資産</th></tr>
+            </thead>
+            <tbody id="cashflowYearlyRows"></tbody>
+          </table>
+        </div>
+        <h2>月次キャッシュフロー</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>月</th><th>年</th><th>月間予算</th><th>ローン返済</th><th>所有維持費</th><th>月間余力</th><th>元金残高</th><th>金融資産</th><th>純資産</th></tr>
+            </thead>
+            <tbody id="cashflowMonthlyRows"></tbody>
+          </table>
+        </div>
+      </section>
     </section>
   </div>
 </main>
@@ -475,25 +509,65 @@
 
 <script>
   const COPYRIGHT_NOTICE = "Copyright (c) 2026 Aihisa Kamijo. All rights reserved.";
-  const chart = document.getElementById("loanChart");
-  const principalInput = document.getElementById("principal");
-  const termYearsInput = document.getElementById("termYears");
-  const scenarioSelect = document.getElementById("scenario");
-  const rateRowsEl = document.getElementById("rateRows");
-  const addRateRowButton = document.getElementById("addRateRowButton");
-  const metricsEl = document.getElementById("metrics");
-  const yearlyRowsEl = document.getElementById("yearlyRows");
-  const monthlyRowsEl = document.getElementById("monthlyRows");
-  const errorEl = document.getElementById("errorMessage");
-  const scenarioNoteEl = document.getElementById("scenarioNote");
-
-  let currentRows = [];
-  let currentConfig = {};
-  const initialRatePeriods = [
-    { rate: 0.7, years: 5 },
-    { rate: 0.8, years: 10 },
-    { rate: 1.0, years: 20 },
-  ];
+  const stateVersion = 1;
+  const defaultState = {
+    v: stateVersion,
+    view: "loan",
+    loan: {
+      principal: 54000000,
+      termYears: 35,
+      scenario: "manual",
+      ratePeriods: [
+        { rate: 0.7, years: 5 },
+        { rate: 0.8, years: 10 },
+        { rate: 1.0, years: 20 },
+      ],
+    },
+    buy: {
+      assets: 8000000,
+      returnRate: 4.0,
+      monthlyRent: 180000,
+      homePrice: 60000000,
+      downPaymentRate: 10,
+      emergencyFund: 3000000,
+      annualBudget: 3960000,
+      taxRate: 0.35,
+      maintenanceRate: 0.8,
+      insuranceRate: 0.1,
+      buyCostRate: 6.0,
+      sellCostRate: 3.5,
+      stayYears: 20,
+      maxWaitYears: 25,
+    },
+    assumptions: {
+      rentScenario: "manual",
+      rentPeriods: [{ rate: 1.0, years: 80 }],
+      homeScenario: "manual",
+      homePeriods: [{ rate: 0.5, years: 80 }],
+      budgetScenario: "manual",
+      budgetPeriods: [{ rate: 1.0, years: 80 }],
+    },
+    cashflow: {
+      purchaseWaitYears: 0,
+    },
+  };
+  const assumptionScenarioTemplates = {
+    rent: {
+      pastRise: [{ rate: 2.0, years: 10 }, { rate: 1.0, years: 70 }],
+      pastInflation: [{ rate: 4.0, years: 5 }, { rate: 2.0, years: 10 }, { rate: 1.0, years: 65 }],
+      pastStagnant: [{ rate: 0.2, years: 80 }],
+    },
+    home: {
+      pastRise: [{ rate: 4.0, years: 5 }, { rate: 1.0, years: 75 }],
+      pastFall: [{ rate: -3.0, years: 10 }, { rate: 0, years: 70 }],
+      pastVolatile: [{ rate: 5.0, years: 5 }, { rate: -4.0, years: 5 }, { rate: 1.0, years: 70 }],
+    },
+    budget: {
+      pastWageGrowth: [{ rate: 2.0, years: 10 }, { rate: 1.0, years: 70 }],
+      pastStagnant: [{ rate: 0.2, years: 80 }],
+      pastSqueeze: [{ rate: 0.5, years: 10 }, { rate: 0, years: 70 }],
+    },
+  };
   const shortPrimeBenchmarkPeriods = [
     { delta: 0.0, years: 5 },
     { delta: 0.15, years: 1 },
@@ -506,39 +580,381 @@
   ];
   const variableRuleText = "5年ルール・125%ルール・未払利息あり";
 
+  let state = clone(defaultState);
+  let suppressHashUpdate = false;
+  let currentLoanRows = [];
+  let currentBuyRows = [];
+  let currentCashflow = null;
+
+  let renderedControlView = "";
+  let els = {};
+
+  function refreshElements() {
+    els = {
+      controlSections: document.getElementById("controlSections"),
+      error: document.getElementById("errorMessage"),
+      scenarioNote: document.getElementById("scenarioNote"),
+      saveCsvButton: document.getElementById("saveCsvButton"),
+      rateRows: document.getElementById("rateRows"),
+      addRateRowButton: document.getElementById("addRateRowButton"),
+      loanPrincipal: document.getElementById("loanPrincipal"),
+      loanTermYears: document.getElementById("loanTermYears"),
+      loanScenario: document.getElementById("loanScenario"),
+      buyAssets: document.getElementById("buyAssets"),
+      buyReturnRate: document.getElementById("buyReturnRate"),
+      buyMonthlyRent: document.getElementById("buyMonthlyRent"),
+      buyHomePrice: document.getElementById("buyHomePrice"),
+      buyDownPaymentRate: document.getElementById("buyDownPaymentRate"),
+      buyEmergencyFund: document.getElementById("buyEmergencyFund"),
+      buyAnnualBudget: document.getElementById("buyAnnualBudget"),
+      buyTaxRate: document.getElementById("buyTaxRate"),
+      buyMaintenanceRate: document.getElementById("buyMaintenanceRate"),
+      buyInsuranceRate: document.getElementById("buyInsuranceRate"),
+      buyBuyCostRate: document.getElementById("buyBuyCostRate"),
+      buySellCostRate: document.getElementById("buySellCostRate"),
+      buyStayYears: document.getElementById("buyStayYears"),
+      buyMaxWaitYears: document.getElementById("buyMaxWaitYears"),
+      rentScenario: document.getElementById("rentScenario"),
+      rentRows: document.getElementById("rentRows"),
+      addRentRowButton: document.getElementById("addRentRowButton"),
+      homeScenario: document.getElementById("homeScenario"),
+      homeRows: document.getElementById("homeRows"),
+      addHomeRowButton: document.getElementById("addHomeRowButton"),
+      budgetScenario: document.getElementById("budgetScenario"),
+      budgetRows: document.getElementById("budgetRows"),
+      addBudgetRowButton: document.getElementById("addBudgetRowButton"),
+      cashflowPurchaseWaitYears: document.getElementById("cashflowPurchaseWaitYears"),
+    };
+  }
+
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
   function yen(value) {
     return `${Math.round(value).toLocaleString("ja-JP")} 円`;
   }
 
-  function createNumberInput(className, value, step, min) {
-    const input = document.createElement("input");
-    input.className = className;
-    input.type = "number";
-    input.step = step;
-    input.min = min;
-    input.value = value;
-    input.inputMode = "decimal";
-    input.addEventListener("input", () => {
-      scenarioSelect.value = "manual";
-      currentConfig.baseRate = undefined;
-      recalculate();
+  function signedYen(value) {
+    const sign = value > 0 ? "+" : "";
+    return `${sign}${yen(value)}`;
+  }
+
+  function pct(value) {
+    return value / 100;
+  }
+
+  function encodeState(value) {
+    const json = JSON.stringify(value);
+    const bytes = new TextEncoder().encode(json);
+    let binary = "";
+    bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  }
+
+  function decodeState(encoded) {
+    const padded = encoded.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((encoded.length + 3) % 4);
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+
+  function mergeState(input) {
+    const merged = clone(defaultState);
+    if (!input || typeof input !== "object") return merged;
+    merged.view = ["loan", "assumptions", "buy", "cashflow"].includes(input.view) ? input.view : merged.view;
+    Object.assign(merged.loan, input.loan || {});
+    Object.assign(merged.buy, input.buy || {});
+    Object.assign(merged.assumptions, input.assumptions || {});
+    Object.assign(merged.cashflow, input.cashflow || {});
+    if (input.buy && input.buy.rentGrowthRate !== undefined && !input.assumptions?.rentPeriods) {
+      merged.assumptions.rentPeriods = [{ rate: Number(input.buy.rentGrowthRate), years: 80 }];
+    }
+    if (input.buy && input.buy.homeGrowthRate !== undefined && !input.assumptions?.homePeriods) {
+      merged.assumptions.homePeriods = [{ rate: Number(input.buy.homeGrowthRate), years: 80 }];
+    }
+    if (input.buy && input.buy.budgetGrowthRate !== undefined && !input.assumptions?.budgetPeriods) {
+      merged.assumptions.budgetPeriods = [{ rate: Number(input.buy.budgetGrowthRate), years: 80 }];
+    }
+    if (!Array.isArray(merged.loan.ratePeriods) || merged.loan.ratePeriods.length === 0) {
+      merged.loan.ratePeriods = clone(defaultState.loan.ratePeriods);
+    }
+    ["rent", "home", "budget"].forEach((kind) => {
+      const key = `${kind}Periods`;
+      if (!Array.isArray(merged.assumptions[key]) || merged.assumptions[key].length === 0) {
+        merged.assumptions[key] = clone(defaultState.assumptions[key]);
+      }
     });
-    return input;
+    return merged;
+  }
+
+  function loadStateFromHash() {
+    const match = location.hash.match(/(?:^#|&)state=([^&]+)/);
+    if (!match) return clone(defaultState);
+    try {
+      return mergeState(decodeState(match[1]));
+    } catch {
+      return clone(defaultState);
+    }
+  }
+
+  function syncHash() {
+    if (suppressHashUpdate) return;
+    const encoded = encodeState(state);
+    history.replaceState(null, "", `${location.pathname}${location.search}#state=${encoded}`);
+  }
+
+  function readFinite(input, label, options = {}) {
+    const value = Number(input.value);
+    if (!Number.isFinite(value)) throw new Error(`${label}は数値で入力してください。`);
+    if (options.integer && !Number.isInteger(value)) throw new Error(`${label}は整数で入力してください。`);
+    if (options.min !== undefined && value < options.min) throw new Error(`${label}は${options.min}以上で入力してください。`);
+    if (options.max !== undefined && value > options.max) throw new Error(`${label}は${options.max}以下で入力してください。`);
+    return value;
+  }
+
+  function inputMarkup(id, label, attrs = "", wide = false) {
+    return `<label${wide ? ' class="wide"' : ""}>${label}<input id="${id}" ${attrs}></label>`;
+  }
+
+  function selectMarkup(id, label, options, wide = false) {
+    return `<label${wide ? ' class="wide"' : ""}>${label}<select id="${id}">${options.map(([value, text]) => `<option value="${value}">${text}</option>`).join("")}</select></label>`;
+  }
+
+  function sectionMarkup(title, body) {
+    return `<section class="control-section"><div class="group-title">${title}</div>${body}</section>`;
+  }
+
+  function fieldGrid(fields) {
+    return `<div class="field-grid">${fields.join("")}</div>`;
+  }
+
+  function loanScenarioMarkup(wide = true) {
+    return selectMarkup("loanScenario", "金利シナリオ", [
+      ["manual", "手入力"],
+      ["flat", "現在金利据え置き"],
+      ["plus1", "現在金利 +1%"],
+      ["plus2", "現在金利 +2%"],
+      ["plus3", "現在金利 +3%"],
+      ["shortPrime", "短プラ連動（過去変化幅）"],
+      ["stress85", "過去高金利ストレス 8.5%"],
+    ], wide);
+  }
+
+  const assumptionScenarioLabels = {
+    rent: {
+      manual: "手入力",
+      pastRise: "過去型 上昇",
+      pastInflation: "過去型 インフレ",
+      pastStagnant: "過去型 横ばい",
+    },
+    home: {
+      manual: "手入力",
+      pastRise: "過去型 上昇",
+      pastFall: "過去型 下落",
+      pastVolatile: "過去型 変動",
+    },
+    budget: {
+      manual: "手入力",
+      pastWageGrowth: "過去型 賃金上昇",
+      pastStagnant: "過去型 横ばい",
+      pastSqueeze: "過去型 伸び悩み",
+    },
+  };
+
+  function renderControlsForView(force = false) {
+    if (!force && renderedControlView === state.view) return;
+    refreshElements();
+    const loanFields = [
+      inputMarkup("loanPrincipal", "借入額（連動）", 'type="number" min="0" step="10000" inputmode="numeric"'),
+      inputMarkup("loanTermYears", "借入期間（年）", 'type="number" min="1" max="80" step="1" inputmode="numeric"'),
+      loanScenarioMarkup(true),
+    ];
+    const purchaseBasisFields = [
+      inputMarkup("buyHomePrice", "現在住宅価格", 'type="number" min="1" step="100000" inputmode="numeric"'),
+      inputMarkup("buyDownPaymentRate", "頭金比率（%）", 'type="number" min="0" max="100" step="1" inputmode="decimal"'),
+      inputMarkup("loanPrincipal", "借入額（連動）", 'type="number" min="0" step="10000" inputmode="numeric"', true),
+    ];
+    const baseValueFields = [
+      inputMarkup("buyMonthlyRent", "同等物件の月額家賃", 'type="number" min="0" step="1000" inputmode="numeric"'),
+      inputMarkup("buyHomePrice", "現在住宅価格", 'type="number" min="1" step="100000" inputmode="numeric"'),
+      inputMarkup("buyAnnualBudget", "住居費・貯蓄 合計予算", 'type="number" step="10000" inputmode="numeric"', true),
+    ];
+    const householdFields = [
+      inputMarkup("buyAssets", "現在金融資産", 'type="number" min="0" step="10000" inputmode="numeric"'),
+      inputMarkup("buyReturnRate", "期待運用利回り（%）", 'type="number" step="0.1" inputmode="decimal"'),
+      inputMarkup("buyEmergencyFund", "生活防衛資金", 'type="number" min="0" step="10000" inputmode="numeric"'),
+      inputMarkup("buyAnnualBudget", "住居費・貯蓄 合計予算", 'type="number" step="10000" inputmode="numeric"'),
+    ];
+    const ownershipCostFields = [
+      inputMarkup("buyTaxRate", "固定資産税など（年率%）", 'type="number" min="0" step="0.05" inputmode="decimal"'),
+      inputMarkup("buyMaintenanceRate", "維持管理修繕（年率%）", 'type="number" min="0" step="0.05" inputmode="decimal"'),
+      inputMarkup("buyInsuranceRate", "保険その他（年率%）", 'type="number" min="0" step="0.05" inputmode="decimal"'),
+      inputMarkup("buyBuyCostRate", "購入諸費用（%）", 'type="number" min="0" step="0.1" inputmode="decimal"'),
+      inputMarkup("buySellCostRate", "売却費用（%）", 'type="number" min="0" step="0.1" inputmode="decimal"'),
+    ];
+    const monthlyBudgetFields = [
+      inputMarkup("buyAnnualBudget", "住居費・貯蓄 合計予算", 'type="number" step="10000" inputmode="numeric"'),
+      inputMarkup("buyTaxRate", "固定資産税など（年率%）", 'type="number" min="0" step="0.05" inputmode="decimal"'),
+      inputMarkup("buyMaintenanceRate", "維持管理修繕（年率%）", 'type="number" min="0" step="0.05" inputmode="decimal"'),
+      inputMarkup("buyInsuranceRate", "保険その他（年率%）", 'type="number" min="0" step="0.05" inputmode="decimal"'),
+    ];
+    const assetFields = [
+      inputMarkup("buyAssets", "現在金融資産", 'type="number" min="0" step="10000" inputmode="numeric"'),
+      inputMarkup("buyReturnRate", "期待運用利回り（%）", 'type="number" step="0.1" inputmode="decimal"'),
+      inputMarkup("buyEmergencyFund", "生活防衛資金", 'type="number" min="0" step="10000" inputmode="numeric"', true),
+    ];
+
+    const assumptionSections = [
+      sectionMarkup("基準値", fieldGrid(baseValueFields)),
+      sectionMarkup("家賃推移", `${selectMarkup("rentScenario", "家賃シナリオ", [["manual", "手入力"], ["pastRise", "過去型 上昇"], ["pastInflation", "過去型 インフレ"], ["pastStagnant", "過去型 横ばい"]])}<div class="rate-rows" id="rentRows"></div><button id="addRentRowButton" type="button" style="width:100%;margin-top:8px;">家賃推移行を追加</button>`),
+      sectionMarkup("住宅価値推移", `${selectMarkup("homeScenario", "住宅価値シナリオ", [["manual", "手入力"], ["pastRise", "過去型 上昇"], ["pastFall", "過去型 下落"], ["pastVolatile", "過去型 変動"]])}<div class="rate-rows" id="homeRows"></div><button id="addHomeRowButton" type="button" style="width:100%;margin-top:8px;">住宅価値推移行を追加</button>`),
+      sectionMarkup("住居費・貯蓄 合計予算推移", `${selectMarkup("budgetScenario", "予算シナリオ", [["manual", "手入力"], ["pastWageGrowth", "過去型 賃金上昇"], ["pastStagnant", "過去型 横ばい"], ["pastSqueeze", "過去型 伸び悩み"]])}<div class="rate-rows" id="budgetRows"></div><button id="addBudgetRowButton" type="button" style="width:100%;margin-top:8px;">予算推移行を追加</button>`),
+    ];
+
+    const markupByView = {
+      loan: [
+        sectionMarkup("ローン条件", fieldGrid(loanFields)),
+        sectionMarkup("金利設定（年利% + 継続年数）", '<div class="rate-rows" id="rateRows"></div><button id="addRateRowButton" type="button" style="width:100%;margin-top:8px;">金利行を追加</button>'),
+      ],
+      assumptions: assumptionSections,
+      buy: [
+        sectionMarkup("購入基準", fieldGrid(purchaseBasisFields)),
+        sectionMarkup("家計・資産", fieldGrid(householdFields)),
+        sectionMarkup("賃貸比較", fieldGrid([inputMarkup("buyMonthlyRent", "同等物件の月額家賃", 'type="number" min="0" step="1000" inputmode="numeric"', true)])),
+        sectionMarkup("購入・保有コスト", fieldGrid(ownershipCostFields)),
+        sectionMarkup("比較期間", fieldGrid([
+          inputMarkup("buyStayYears", "居住予定年数", 'type="number" min="1" max="80" step="1" inputmode="numeric"'),
+          inputMarkup("buyMaxWaitYears", "購入時期の探索年数", 'type="number" min="0" max="80" step="1" inputmode="numeric"'),
+        ])),
+      ],
+      cashflow: [
+        sectionMarkup("購入ケース", `${selectMarkup("cashflowPurchaseWaitYears", "購入時期", [], true)}${fieldGrid(purchaseBasisFields)}`),
+        sectionMarkup("返済条件", `${fieldGrid([
+          inputMarkup("loanTermYears", "借入期間（年）", 'type="number" min="1" max="80" step="1" inputmode="numeric"'),
+          loanScenarioMarkup(false),
+        ])}<p class="note">金利行の詳細はローンタブで編集します。</p>`),
+        sectionMarkup("月々の家計", fieldGrid(monthlyBudgetFields)),
+        sectionMarkup("資産条件", fieldGrid(assetFields)),
+      ],
+    };
+
+    els.controlSections.innerHTML = markupByView[state.view].join("");
+    renderedControlView = state.view;
+    refreshElements();
+    bindControlEvents();
+  }
+
+  function setInputValue(input, value) {
+    if (input) input.value = value;
+  }
+
+  function setInputValues() {
+    renderControlsForView();
+    state.loan.principal = principalFromPurchase();
+    setInputValue(els.loanPrincipal, Math.round(state.loan.principal));
+    setInputValue(els.loanTermYears, state.loan.termYears);
+    setInputValue(els.loanScenario, state.loan.scenario);
+    setInputValue(els.buyAssets, state.buy.assets);
+    setInputValue(els.buyReturnRate, state.buy.returnRate);
+    setInputValue(els.buyMonthlyRent, state.buy.monthlyRent);
+    setInputValue(els.buyHomePrice, state.buy.homePrice);
+    setInputValue(els.buyDownPaymentRate, state.buy.downPaymentRate);
+    setInputValue(els.buyEmergencyFund, state.buy.emergencyFund);
+    setInputValue(els.buyAnnualBudget, state.buy.annualBudget);
+    setInputValue(els.buyTaxRate, state.buy.taxRate);
+    setInputValue(els.buyMaintenanceRate, state.buy.maintenanceRate);
+    setInputValue(els.buyInsuranceRate, state.buy.insuranceRate);
+    setInputValue(els.buyBuyCostRate, state.buy.buyCostRate);
+    setInputValue(els.buySellCostRate, state.buy.sellCostRate);
+    setInputValue(els.buyStayYears, state.buy.stayYears);
+    setInputValue(els.buyMaxWaitYears, state.buy.maxWaitYears);
+    setInputValue(els.rentScenario, state.assumptions.rentScenario);
+    setInputValue(els.homeScenario, state.assumptions.homeScenario);
+    setInputValue(els.budgetScenario, state.assumptions.budgetScenario);
+    setRateRows(state.loan.ratePeriods);
+    setAssumptionRows("rent", state.assumptions.rentPeriods);
+    setAssumptionRows("home", state.assumptions.homePeriods);
+    setAssumptionRows("budget", state.assumptions.budgetPeriods);
+  }
+
+  function readInputsIntoState() {
+    if (els.loanPrincipal) state.loan.principal = readFinite(els.loanPrincipal, "借入額", { min: 0 });
+    if (els.loanTermYears) state.loan.termYears = readFinite(els.loanTermYears, "借入期間", { integer: true, min: 1, max: 80 });
+    if (els.loanScenario) state.loan.scenario = els.loanScenario.value;
+    state.loan.ratePeriods = readRatePeriods();
+    if (els.buyAssets) state.buy.assets = readFinite(els.buyAssets, "現在金融資産", { min: 0 });
+    if (els.buyReturnRate) state.buy.returnRate = readFinite(els.buyReturnRate, "期待運用利回り");
+    if (els.buyMonthlyRent) state.buy.monthlyRent = readFinite(els.buyMonthlyRent, "同等物件の月額家賃", { min: 0 });
+    if (els.buyHomePrice) state.buy.homePrice = readFinite(els.buyHomePrice, "現在住宅価格", { min: 1 });
+    if (els.buyDownPaymentRate) state.buy.downPaymentRate = readFinite(els.buyDownPaymentRate, "頭金比率", { min: 0, max: 100 });
+    if (els.loanPrincipal && !els.buyDownPaymentRate) {
+      const principal = Math.min(state.buy.homePrice, state.loan.principal);
+      state.buy.downPaymentRate = (1 - principal / state.buy.homePrice) * 100;
+    }
+    if (els.buyEmergencyFund) state.buy.emergencyFund = readFinite(els.buyEmergencyFund, "生活防衛資金", { min: 0 });
+    if (els.buyAnnualBudget) state.buy.annualBudget = readFinite(els.buyAnnualBudget, "住居費・貯蓄 合計予算");
+    if (els.buyTaxRate) state.buy.taxRate = readFinite(els.buyTaxRate, "固定資産税など", { min: 0 });
+    if (els.buyMaintenanceRate) state.buy.maintenanceRate = readFinite(els.buyMaintenanceRate, "維持管理修繕", { min: 0 });
+    if (els.buyInsuranceRate) state.buy.insuranceRate = readFinite(els.buyInsuranceRate, "保険その他", { min: 0 });
+    if (els.buyBuyCostRate) state.buy.buyCostRate = readFinite(els.buyBuyCostRate, "購入諸費用", { min: 0 });
+    if (els.buySellCostRate) state.buy.sellCostRate = readFinite(els.buySellCostRate, "売却費用", { min: 0 });
+    if (els.buyStayYears) state.buy.stayYears = readFinite(els.buyStayYears, "居住予定年数", { integer: true, min: 1, max: 80 });
+    if (els.buyMaxWaitYears) state.buy.maxWaitYears = readFinite(els.buyMaxWaitYears, "購入時期の探索年数", { integer: true, min: 0, max: 80 });
+    if (els.rentScenario) state.assumptions.rentScenario = els.rentScenario.value;
+    if (els.homeScenario) state.assumptions.homeScenario = els.homeScenario.value;
+    if (els.budgetScenario) state.assumptions.budgetScenario = els.budgetScenario.value;
+    state.assumptions.rentPeriods = readAssumptionPeriods("rent");
+    state.assumptions.homePeriods = readAssumptionPeriods("home");
+    state.assumptions.budgetPeriods = readAssumptionPeriods("budget");
+    if (els.cashflowPurchaseWaitYears) state.cashflow.purchaseWaitYears = Number(els.cashflowPurchaseWaitYears.value || state.cashflow.purchaseWaitYears);
+    state.loan.principal = principalFromPurchase();
+  }
+
+  function principalFromPurchase() {
+    return Math.max(0, state.buy.homePrice * (1 - pct(state.buy.downPaymentRate)));
+  }
+
+  function syncPrincipalFromPurchaseInputs() {
+    const homePrice = els.buyHomePrice ? readFinite(els.buyHomePrice, "現在住宅価格", { min: 1 }) : state.buy.homePrice;
+    const downPaymentRate = els.buyDownPaymentRate ? readFinite(els.buyDownPaymentRate, "頭金比率", { min: 0, max: 100 }) : state.buy.downPaymentRate;
+    if (els.loanPrincipal) els.loanPrincipal.value = Math.round(Math.max(0, homePrice * (1 - pct(downPaymentRate))));
+  }
+
+  function syncDownPaymentFromPrincipalInput() {
+    const homePrice = els.buyHomePrice ? readFinite(els.buyHomePrice, "現在住宅価格", { min: 1 }) : state.buy.homePrice;
+    const principal = Math.min(homePrice, readFinite(els.loanPrincipal, "借入額", { min: 0 }));
+    const downPaymentRate = (1 - principal / homePrice) * 100;
+    els.loanPrincipal.value = Math.round(principal);
+    state.buy.downPaymentRate = downPaymentRate;
+    if (els.buyDownPaymentRate) els.buyDownPaymentRate.value = Number(downPaymentRate.toFixed(6));
   }
 
   function addRateRow(period = { rate: 1.0, years: 1 }) {
+    if (!els.rateRows) return;
     const row = document.createElement("div");
     row.className = "rate-row";
 
     const rateLabel = document.createElement("label");
     rateLabel.textContent = "年利（%）";
-    const rateInput = createNumberInput("rate-input", period.rate, "0.01", "0");
+    const rateInput = document.createElement("input");
+    rateInput.className = "rate-input";
+    rateInput.type = "number";
+    rateInput.step = "0.01";
+    rateInput.min = "0";
+    rateInput.inputMode = "decimal";
+    rateInput.value = period.rate;
     rateLabel.append(rateInput);
 
     const yearsLabel = document.createElement("label");
     yearsLabel.textContent = "継続年数";
-    const yearsInput = createNumberInput("years-input", period.years, "1", "1");
+    const yearsInput = document.createElement("input");
+    yearsInput.className = "years-input";
+    yearsInput.type = "number";
+    yearsInput.step = "1";
+    yearsInput.min = "1";
     yearsInput.inputMode = "numeric";
+    yearsInput.value = period.years;
     yearsLabel.append(yearsInput);
 
     const removeButton = document.createElement("button");
@@ -548,59 +964,169 @@
     removeButton.title = "金利行を削除";
     removeButton.textContent = "-";
     removeButton.addEventListener("click", () => {
-      if (rateRowsEl.children.length === 1) {
-        errorEl.textContent = "金利設定は1行以上必要です。";
+      if (els.rateRows.children.length === 1) {
+        els.error.textContent = "金利設定は1行以上必要です。";
         return;
       }
       row.remove();
-      recalculate();
+      state.loan.scenario = "manual";
+      els.loanScenario.value = "manual";
+      recalculateFromInputs();
+    });
+
+    [rateInput, yearsInput].forEach((input) => {
+      input.addEventListener("input", () => {
+        state.loan.scenario = "manual";
+        els.loanScenario.value = "manual";
+        recalculateFromInputs();
+      });
     });
 
     row.append(rateLabel, yearsLabel, removeButton);
-    rateRowsEl.append(row);
+    els.rateRows.append(row);
   }
 
   function setRateRows(periods) {
-    rateRowsEl.replaceChildren();
+    if (!els.rateRows) return;
+    els.rateRows.replaceChildren();
     periods.forEach((period) => addRateRow(period));
   }
 
   function readRatePeriods() {
-    const periods = Array.from(rateRowsEl.querySelectorAll(".rate-row")).map((row, index) => {
+    if (!els.rateRows) return state.loan.ratePeriods;
+    const periods = Array.from(els.rateRows.querySelectorAll(".rate-row")).map((row, index) => {
       const rate = Number(row.querySelector(".rate-input").value);
       const years = Number(row.querySelector(".years-input").value);
-
-      if (!Number.isFinite(rate) || rate < 0) {
-        throw new Error(`${index + 1}行目の年利は0以上の数で入力してください。`);
-      }
-      if (!Number.isInteger(years) || years <= 0) {
-        throw new Error(`${index + 1}行目の継続年数は1以上の整数で入力してください。`);
-      }
-
+      if (!Number.isFinite(rate) || rate < 0) throw new Error(`${index + 1}行目の年利は0以上の数で入力してください。`);
+      if (!Number.isInteger(years) || years <= 0) throw new Error(`${index + 1}行目の継続年数は1以上の整数で入力してください。`);
       return { rate, years };
     });
+    if (periods.length === 0) throw new Error("金利設定を1行以上入力してください。");
+    return periods;
+  }
 
-    if (periods.length === 0) {
-      throw new Error("金利設定を1行以上入力してください。");
-    }
+  function assumptionConfig(kind) {
+    return {
+      rent: { rows: els.rentRows, scenario: els.rentScenario, label: "家賃" },
+      home: { rows: els.homeRows, scenario: els.homeScenario, label: "住宅価値" },
+      budget: { rows: els.budgetRows, scenario: els.budgetScenario, label: "予算" },
+    }[kind];
+  }
 
+  function addAssumptionRow(kind, period = { rate: 1.0, years: 1 }) {
+    const config = assumptionConfig(kind);
+    if (!config.rows || !config.scenario) return;
+    const row = document.createElement("div");
+    row.className = "assumption-row";
+
+    const rateLabel = document.createElement("label");
+    rateLabel.textContent = "変化率（%）";
+    const rateInput = document.createElement("input");
+    rateInput.className = "assumption-rate-input";
+    rateInput.type = "number";
+    rateInput.step = "0.1";
+    rateInput.inputMode = "decimal";
+    rateInput.value = period.rate;
+    rateLabel.append(rateInput);
+
+    const yearsLabel = document.createElement("label");
+    yearsLabel.textContent = "継続年数";
+    const yearsInput = document.createElement("input");
+    yearsInput.className = "assumption-years-input";
+    yearsInput.type = "number";
+    yearsInput.step = "1";
+    yearsInput.min = "1";
+    yearsInput.inputMode = "numeric";
+    yearsInput.value = period.years;
+    yearsLabel.append(yearsInput);
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "icon-button";
+    removeButton.setAttribute("aria-label", `${config.label}推移行を削除`);
+    removeButton.title = `${config.label}推移行を削除`;
+    removeButton.textContent = "-";
+    removeButton.addEventListener("click", () => {
+      if (config.rows.children.length === 1) {
+        els.error.textContent = `${config.label}推移は1行以上必要です。`;
+        return;
+      }
+      row.remove();
+      config.scenario.value = "manual";
+      recalculateFromInputs();
+    });
+
+    [rateInput, yearsInput].forEach((input) => {
+      input.addEventListener("input", () => {
+        config.scenario.value = "manual";
+        recalculateFromInputs();
+      });
+    });
+
+    row.append(rateLabel, yearsLabel, removeButton);
+    config.rows.append(row);
+  }
+
+  function setAssumptionRows(kind, periods) {
+    const config = assumptionConfig(kind);
+    if (!config.rows) return;
+    config.rows.replaceChildren();
+    periods.forEach((period) => addAssumptionRow(kind, period));
+  }
+
+  function readAssumptionPeriods(kind) {
+    const config = assumptionConfig(kind);
+    if (!config.rows) return state.assumptions[`${kind}Periods`];
+    const periods = Array.from(config.rows.querySelectorAll(".assumption-row")).map((row, index) => {
+      const rate = Number(row.querySelector(".assumption-rate-input").value);
+      const years = Number(row.querySelector(".assumption-years-input").value);
+      if (!Number.isFinite(rate)) throw new Error(`${config.label}推移 ${index + 1}行目の変化率は数値で入力してください。`);
+      if (rate <= -100) throw new Error(`${config.label}推移 ${index + 1}行目の変化率は-100%より大きい値で入力してください。`);
+      if (!Number.isInteger(years) || years <= 0) throw new Error(`${config.label}推移 ${index + 1}行目の継続年数は1以上の整数で入力してください。`);
+      return { rate, years };
+    });
+    if (periods.length === 0) throw new Error(`${config.label}推移を1行以上入力してください。`);
     return periods;
   }
 
   function expandRates(periods, termYears) {
     const rates = [];
-
     periods.forEach((period) => {
       for (let year = 0; year < period.years && rates.length < termYears; year += 1) {
         rates.push(period.rate);
       }
     });
-
-    while (rates.length < termYears) {
-      rates.push(periods[periods.length - 1].rate);
-    }
-
+    while (rates.length < termYears) rates.push(periods[periods.length - 1].rate);
     return rates;
+  }
+
+  function periodsForAssumption(kind) {
+    const scenario = state.assumptions[`${kind}Scenario`];
+    if (scenario === "manual") return state.assumptions[`${kind}Periods`];
+    return assumptionScenarioTemplates[kind][scenario] || state.assumptions[`${kind}Periods`];
+  }
+
+  function rateForAssumptionYear(kind, year) {
+    const periods = periodsForAssumption(kind);
+    let elapsed = 0;
+    for (const period of periods) {
+      elapsed += period.years;
+      if (year <= elapsed) return period.rate;
+    }
+    return periods[periods.length - 1].rate;
+  }
+
+  function valueFromAssumption(baseValue, kind, years) {
+    const wholeYears = Math.floor(Math.max(0, years));
+    const fraction = Math.max(0, years) - wholeYears;
+    let value = baseValue;
+    for (let year = 1; year <= wholeYears; year += 1) {
+      value *= 1 + pct(rateForAssumptionYear(kind, year));
+    }
+    if (fraction > 0) {
+      value *= Math.pow(1 + pct(rateForAssumptionYear(kind, wholeYears + 1)), fraction);
+    }
+    return value;
   }
 
   function compressRates(rates) {
@@ -617,31 +1143,14 @@
     return periods;
   }
 
-  function currentManualRate() {
-    const periods = readRatePeriods();
-    return periods[0].rate;
-  }
-
   function buildScenarioPeriods(scenario, termYears, currentRate) {
-    if (scenario === "manual") {
-      return readRatePeriods();
-    }
-    if (scenario === "flat") {
-      return [{ rate: currentRate, years: termYears }];
-    }
+    if (scenario === "manual") return readRatePeriods();
+    if (scenario === "flat") return [{ rate: currentRate, years: termYears }];
     if (scenario === "plus1" || scenario === "plus2" || scenario === "plus3") {
       const add = Number(scenario.replace("plus", ""));
-      return [
-        { rate: currentRate, years: 5 },
-        { rate: currentRate + add, years: termYears },
-      ];
+      return [{ rate: currentRate, years: 5 }, { rate: currentRate + add, years: termYears }];
     }
-    if (scenario === "stress85") {
-      return [
-        { rate: currentRate, years: 5 },
-        { rate: 8.5, years: termYears },
-      ];
-    }
+    if (scenario === "stress85") return [{ rate: currentRate, years: 5 }, { rate: 8.5, years: termYears }];
     if (scenario === "shortPrime") {
       const rates = [];
       shortPrimeBenchmarkPeriods.forEach((period) => {
@@ -649,29 +1158,24 @@
           rates.push(Math.max(0, currentRate + period.delta));
         }
       });
-      while (rates.length < termYears) {
-        rates.push(Math.max(0, currentRate));
-      }
+      while (rates.length < termYears) rates.push(Math.max(0, currentRate));
       return compressRates(rates);
     }
-
     return readRatePeriods();
   }
 
-  function scenarioDescription(scenario) {
-    if (scenario === "manual") {
-      return `手入力シナリオです。変動金利は${variableRuleText}で計算します。`;
-    }
-    if (scenario === "flat") {
-      return `現在金利を全期間据え置きます。変動金利は${variableRuleText}で計算します。`;
-    }
-    if (scenario === "shortPrime") {
-      return `日銀の主要行短期プライムレートの過去変化幅を、現在入力中の金利に重ねます。変動金利は${variableRuleText}で計算します。`;
-    }
-    if (scenario === "stress85") {
-      return `5年後に8.5%へ上昇するストレスです。変動金利は${variableRuleText}で計算します。`;
-    }
+  function scenarioDescription() {
+    if (state.loan.scenario === "manual") return `手入力シナリオです。変動金利は${variableRuleText}で計算します。`;
+    if (state.loan.scenario === "flat") return `現在金利を全期間据え置きます。変動金利は${variableRuleText}で計算します。`;
+    if (state.loan.scenario === "shortPrime") return `主要行短期プライムレートの過去変化幅を、現在入力中の金利に重ねます。変動金利は${variableRuleText}で計算します。`;
+    if (state.loan.scenario === "stress85") return `5年後に8.5%へ上昇するストレスです。変動金利は${variableRuleText}で計算します。`;
     return `5年後に金利が上昇するストレスです。変動金利は${variableRuleText}で計算します。`;
+  }
+
+  function currentRates() {
+    const baseRate = state.loan.ratePeriods[0]?.rate ?? defaultState.loan.ratePeriods[0].rate;
+    const periods = buildScenarioPeriods(state.loan.scenario, state.loan.termYears, baseRate);
+    return expandRates(periods, state.loan.termYears);
   }
 
   function rateForYear(rates, year) {
@@ -680,11 +1184,7 @@
 
   function monthlyPayment(balance, annualRate, remainingMonths) {
     const monthlyRate = annualRate / 100 / 12;
-
-    if (Math.abs(monthlyRate) < 1e-12) {
-      return balance / remainingMonths;
-    }
-
+    if (Math.abs(monthlyRate) < 1e-12) return balance / remainingMonths;
     return balance * monthlyRate / (1 - Math.pow(1 + monthlyRate, -remainingMonths));
   }
 
@@ -694,36 +1194,44 @@
     let unpaidInterest = 0;
     let payment = 0;
     const rows = [];
-
     for (let month = 1; month <= totalMonths; month += 1) {
       const year = Math.floor((month - 1) / 12) + 1;
       const annualRate = rateForYear(rates, year);
       const remainingMonths = totalMonths - month + 1;
-
+      if (principal <= 0) {
+        rows.push({
+          month, year, annualRate,
+          payment: 0,
+          scheduledPayment: 0,
+          interest: 0,
+          paidCurrentInterest: 0,
+          unpaidGenerated: 0,
+          paidUnpaidInterest: 0,
+          principal: 0,
+          balance: 0,
+          unpaidInterest: 0,
+          totalDebt: 0,
+        });
+        continue;
+      }
       if (month === 1 || (month - 1) % 60 === 0) {
         const recalculatedPayment = monthlyPayment(balance + unpaidInterest, annualRate, remainingMonths);
         payment = month === 1 ? recalculatedPayment : Math.min(recalculatedPayment, payment * 1.25);
       }
-
       const interest = balance * annualRate / 100 / 12;
       let availablePayment = payment;
       const paidCurrentInterest = Math.min(availablePayment, interest);
       const unpaidGenerated = Math.max(0, interest - paidCurrentInterest);
       availablePayment -= paidCurrentInterest;
       unpaidInterest += unpaidGenerated;
-
       const paidUnpaidInterest = Math.min(availablePayment, unpaidInterest);
       unpaidInterest -= paidUnpaidInterest;
       availablePayment -= paidUnpaidInterest;
-
       const principalPayment = Math.min(availablePayment, balance);
       balance = Math.max(0, balance - principalPayment);
       const actualPayment = paidCurrentInterest + paidUnpaidInterest + principalPayment;
-
       rows.push({
-        month,
-        year,
-        annualRate,
+        month, year, annualRate,
         payment: actualPayment,
         scheduledPayment: payment,
         interest,
@@ -736,8 +1244,222 @@
         totalDebt: balance + unpaidInterest,
       });
     }
-
     return rows;
+  }
+
+  function annualRentAt(year) {
+    return valueFromAssumption(state.buy.monthlyRent * 12, "rent", year);
+  }
+
+  function homePriceAt(year) {
+    return valueFromAssumption(state.buy.homePrice, "home", year);
+  }
+
+  function annualBudgetAt(year) {
+    return valueFromAssumption(state.buy.annualBudget, "budget", year);
+  }
+
+  function yearlyLoanPayments(loanRows, stayYears) {
+    const payments = [];
+    for (let year = 1; year <= stayYears; year += 1) {
+      const rows = loanRows.filter((row) => row.year === year);
+      payments.push(rows.reduce((sum, row) => sum + row.payment, 0));
+    }
+    return payments;
+  }
+
+  function annualOperatingCostRate() {
+    return pct(state.buy.taxRate) + pct(state.buy.maintenanceRate) + pct(state.buy.insuranceRate);
+  }
+
+  function estimateAssetsAtPurchase(waitYears) {
+    let assets = state.buy.assets;
+    for (let year = 0; year < waitYears; year += 1) {
+      assets = assets * (1 + pct(state.buy.returnRate)) + (annualBudgetAt(year) - annualRentAt(year));
+    }
+    return assets;
+  }
+
+  function simulateBuyTiming() {
+    const rows = [];
+    const rates = currentRates();
+    const baseLoanRate = rates[0] ?? 0;
+    const operatingCostRate = annualOperatingCostRate();
+    const userCostRate = (
+      pct(state.buy.downPaymentRate) * pct(state.buy.returnRate)
+      + (1 - pct(state.buy.downPaymentRate)) * (baseLoanRate / 100)
+      + operatingCostRate
+      - pct(rateForAssumptionYear("home", 1))
+      + (pct(state.buy.buyCostRate) + pct(state.buy.sellCostRate)) / state.buy.stayYears
+    );
+
+    for (let waitYears = 0; waitYears <= state.buy.maxWaitYears; waitYears += 1) {
+      const price = homePriceAt(waitYears);
+      const annualBudget = annualBudgetAt(waitYears);
+      const rent = annualRentAt(waitYears);
+      const assetsAtPurchase = estimateAssetsAtPurchase(waitYears);
+      const downPayment = price * pct(state.buy.downPaymentRate);
+      const buyCost = price * pct(state.buy.buyCostRate);
+      const requiredCashBeforeEmergency = downPayment + buyCost;
+      const requiredCash = requiredCashBeforeEmergency + state.buy.emergencyFund;
+      const loan = Math.max(0, price - downPayment);
+      const loanRows = simulateLoan(loan, state.loan.termYears, rates);
+      const annualLoanPayments = yearlyLoanPayments(loanRows, state.buy.stayYears);
+      const firstYearLoanPayment = annualLoanPayments[0] ?? 0;
+      const annualHousingCash = firstYearLoanPayment + price * operatingCostRate;
+      const rentInvest = annualBudget - rent;
+      const buyInvest = annualBudget - annualHousingCash;
+      let minBuyInvest = buyInvest;
+      for (let ownedYear = 0; ownedYear < state.buy.stayYears; ownedYear += 1) {
+        const globalYear = waitYears + ownedYear;
+        const futureOperatingCost = homePriceAt(globalYear) * operatingCostRate;
+        const futureLoanPayment = annualLoanPayments[ownedYear] ?? 0;
+        minBuyInvest = Math.min(minBuyInvest, annualBudgetAt(globalYear) - futureLoanPayment - futureOperatingCost);
+      }
+      const userCost = price * userCostRate;
+      const financiallyBetter = rent >= userCost;
+      const hasCash = assetsAtPurchase >= requiredCash;
+      const hasBudget = minBuyInvest >= 0;
+      const netResult = simulateNetWorth(waitYears, { loan, requiredCashBeforeEmergency, annualLoanPayments, operatingCostRate });
+      rows.push({
+        waitYears,
+        annualBudget,
+        rent,
+        rentInvest,
+        userCost,
+        price,
+        assetsAtPurchase,
+        requiredCash,
+        requiredCashBeforeEmergency,
+        loan,
+        annualHousingCash,
+        buyInvest,
+        minBuyInvest,
+        financiallyBetter,
+        hasCash,
+        hasBudget,
+        canBuy: financiallyBetter && hasCash && hasBudget,
+        ...netResult,
+      });
+    }
+    return rows;
+  }
+
+  function simulateNetWorth(waitYears, purchase) {
+    const totalYears = waitYears + state.buy.stayYears;
+    let rentNetWorth = state.buy.assets;
+    for (let year = 0; year < totalYears; year += 1) {
+      rentNetWorth = rentNetWorth * (1 + pct(state.buy.returnRate)) + (annualBudgetAt(year) - annualRentAt(year));
+    }
+
+    let investedAssets = state.buy.assets;
+    for (let year = 0; year < waitYears; year += 1) {
+      investedAssets = investedAssets * (1 + pct(state.buy.returnRate)) + (annualBudgetAt(year) - annualRentAt(year));
+    }
+    investedAssets -= purchase.requiredCashBeforeEmergency;
+    for (let ownedYear = 0; ownedYear < state.buy.stayYears; ownedYear += 1) {
+      const globalYear = waitYears + ownedYear;
+      const annualContribution = annualBudgetAt(globalYear) - (purchase.annualLoanPayments[ownedYear] ?? 0) - homePriceAt(globalYear) * purchase.operatingCostRate;
+      investedAssets = investedAssets * (1 + pct(state.buy.returnRate)) + annualContribution;
+    }
+    const salePrice = homePriceAt(totalYears);
+    const saleCost = salePrice * pct(state.buy.sellCostRate);
+    const remainingLoan = mortgageBalanceFromRows(purchase.loan, state.loan.termYears, currentRates(), state.buy.stayYears);
+    const buyNetWorth = investedAssets + salePrice - saleCost - remainingLoan;
+    return { rentNetWorth, buyNetWorth, netAdvantage: buyNetWorth - rentNetWorth, remainingLoan, salePrice };
+  }
+
+  function mortgageBalanceFromRows(loan, termYears, rates, elapsedYears) {
+    if (loan <= 0) return 0;
+    const rows = simulateLoan(loan, termYears, rates);
+    const index = Math.min(rows.length, elapsedYears * 12) - 1;
+    return index >= 0 ? rows[index].totalDebt : loan;
+  }
+
+  function simulateCashflow(waitYears) {
+    const rates = currentRates();
+    const price = homePriceAt(waitYears);
+    const downPayment = price * pct(state.buy.downPaymentRate);
+    const buyCost = price * pct(state.buy.buyCostRate);
+    const requiredCashBeforeEmergency = downPayment + buyCost;
+    const loan = Math.max(0, price - downPayment);
+    const loanRows = simulateLoan(loan, state.loan.termYears, rates);
+    const monthlyReturn = Math.pow(1 + pct(state.buy.returnRate), 1 / 12) - 1;
+    const operatingCostRate = annualOperatingCostRate();
+    let assets = estimateAssetsAtPurchase(waitYears) - requiredCashBeforeEmergency;
+    const monthlyRows = [];
+    for (let month = 1; month <= state.buy.stayYears * 12; month += 1) {
+      const ownedYear = Math.floor((month - 1) / 12);
+      const globalYear = waitYears + ownedYear;
+      const loanRow = loanRows[month - 1];
+      const loanPayment = loanRow ? loanRow.payment : 0;
+      const principalBalance = loanRow ? loanRow.totalDebt : 0;
+      const monthlyBudget = annualBudgetAt(globalYear) / 12;
+      const operatingCost = homePriceAt(globalYear) * operatingCostRate / 12;
+      const monthlySurplus = monthlyBudget - loanPayment - operatingCost;
+      assets = assets * (1 + monthlyReturn) + monthlySurplus;
+      const homeValue = homePriceAt(waitYears + month / 12);
+      const netWorth = assets + homeValue - principalBalance;
+      monthlyRows.push({
+        month,
+        year: ownedYear + 1,
+        globalYear,
+        monthlyBudget,
+        loanPayment,
+        operatingCost,
+        monthlySurplus,
+        principalBalance,
+        assets,
+        homeValue,
+        netWorth,
+      });
+    }
+    const yearlyRows = [];
+    for (let year = 1; year <= state.buy.stayYears; year += 1) {
+      const rows = monthlyRows.filter((row) => row.year === year);
+      const last = rows[rows.length - 1];
+      yearlyRows.push({
+        year,
+        annualBudget: rows.reduce((sum, row) => sum + row.monthlyBudget, 0),
+        loanPayment: rows.reduce((sum, row) => sum + row.loanPayment, 0),
+        operatingCost: rows.reduce((sum, row) => sum + row.operatingCost, 0),
+        surplus: rows.reduce((sum, row) => sum + row.monthlySurplus, 0),
+        assets: last.assets,
+        homeValue: last.homeValue,
+        principalBalance: last.principalBalance,
+        netWorth: last.netWorth,
+      });
+    }
+    const final = yearlyRows[yearlyRows.length - 1];
+    const saleCost = final.homeValue * pct(state.buy.sellCostRate);
+    const netWorthAfterSale = final.assets + final.homeValue - saleCost - final.principalBalance;
+    const rentNetWorth = simulateNetWorth(waitYears, {
+      loan,
+      requiredCashBeforeEmergency,
+      annualLoanPayments: yearlyLoanPayments(loanRows, state.buy.stayYears),
+      operatingCostRate,
+    }).rentNetWorth;
+    return {
+      waitYears,
+      price,
+      downPayment,
+      buyCost,
+      loan,
+      monthlyRows,
+      yearlyRows,
+      netWorthAfterSale,
+      rentNetWorth,
+      netAdvantageAfterSale: netWorthAfterSale - rentNetWorth,
+    };
+  }
+
+  function purchaseStatus(row) {
+    if (row.canBuy) return "可";
+    const reasons = [];
+    if (!row.financiallyBetter) reasons.push("経済性未達");
+    if (!row.hasCash) reasons.push("資金不足");
+    if (!row.hasBudget) reasons.push("年間予算不足");
+    return reasons.join(" / ");
   }
 
   function niceMax(value) {
@@ -748,25 +1470,17 @@
     return niceFraction * Math.pow(10, exponent);
   }
 
-  function makeTicks(maxValue, count = 5) {
-    const top = niceMax(maxValue);
-    const ticks = [];
-    for (let index = 0; index <= count; index += 1) {
-      ticks.push(top * index / count);
-    }
-    return ticks;
+  function niceMin(value) {
+    if (!Number.isFinite(value) || value >= 0) return 0;
+    return -niceMax(Math.abs(value));
   }
 
-  function pointList(values, maxValue, width, padding, topPad, bottomPad) {
-    const plotWidth = width - padding.left - padding.right;
-    const plotHeight = bottomPad - topPad;
-    const denom = Math.max(1, values.length - 1);
-
-    return values.map((value, index) => {
-      const x = padding.left + plotWidth * index / denom;
-      const y = topPad + plotHeight * (1 - value / maxValue);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    }).join(" ");
+  function makeTicks(minValue, maxValue, count = 5) {
+    const ticks = [];
+    for (let index = 0; index <= count; index += 1) {
+      ticks.push(minValue + (maxValue - minValue) * index / count);
+    }
+    return ticks;
   }
 
   function svgEl(name, attrs = {}, text = "") {
@@ -776,128 +1490,61 @@
     return el;
   }
 
-  function drawChart(rows) {
-    const width = 1120;
-    const height = 544;
-    const padding = { left: 94, right: 98 };
-    const topPad = 56;
-    const bottomPad = 452;
-    const plotLeft = padding.left;
-    const plotRight = width - padding.right;
-    const plotWidth = plotRight - plotLeft;
-    const plotHeight = bottomPad - topPad;
-    const balances = rows.map((row) => row.totalDebt);
-    const payments = rows.map((row) => row.scheduledPayment);
-    const paidInterests = rows.map((row) => row.paidCurrentInterest + row.paidUnpaidInterest);
-    const balanceMax = niceMax(Math.max(...balances));
-    const paymentMax = niceMax(Math.max(...payments, ...paidInterests));
-    const balanceTicks = makeTicks(balanceMax);
-    const paymentTicks = makeTicks(paymentMax);
-
-    chart.replaceChildren();
-    chart.append(svgEl("rect", { x: 0, y: 0, width, height, fill: "#ffffff", rx: 8 }));
-
-    balanceTicks.forEach((tick) => {
-      const y = topPad + plotHeight * (1 - tick / balanceMax);
-      chart.append(svgEl("line", { x1: plotLeft, y1: y, x2: plotRight, y2: y, class: "grid" }));
-      chart.append(svgEl("line", { x1: plotLeft - 5, y1: y, x2: plotLeft, y2: y, class: "axis" }));
-      chart.append(svgEl("text", {
-        x: plotLeft - 10,
-        y: y + 4,
-        "text-anchor": "end",
-        class: "tick-text",
-      }, yen(tick)));
-    });
-
-    paymentTicks.forEach((tick) => {
-      const y = topPad + plotHeight * (1 - tick / paymentMax);
-      chart.append(svgEl("line", { x1: plotRight, y1: y, x2: plotRight + 5, y2: y, class: "axis" }));
-      chart.append(svgEl("text", {
-        x: plotRight + 10,
-        y: y + 4,
-        "text-anchor": "start",
-        class: "tick-text",
-      }, yen(tick)));
-    });
-
-    rows.forEach((row) => {
-      if ((row.month - 1) % 12 !== 0) return;
-      const x = plotLeft + plotWidth * (row.month - 1) / Math.max(1, rows.length - 1);
-      chart.append(svgEl("line", { x1: x, y1: topPad, x2: x, y2: bottomPad, class: "grid" }));
-      chart.append(svgEl("text", {
-        x,
-        y: 486,
-        "text-anchor": "middle",
-        class: "tick-text",
-      }, `${row.year}年`));
-    });
-
-    chart.append(svgEl("line", { x1: plotLeft, y1: bottomPad, x2: plotRight, y2: bottomPad, class: "axis" }));
-    chart.append(svgEl("line", { x1: plotLeft, y1: topPad, x2: plotLeft, y2: bottomPad, class: "axis" }));
-    chart.append(svgEl("line", { x1: plotRight, y1: topPad, x2: plotRight, y2: bottomPad, class: "axis" }));
-
-    chart.append(svgEl("text", {
-      x: plotLeft,
-      y: 26,
-      fill: "#1d65d8",
-      class: "axis-title",
-    }, "左軸: ローン残高"));
-    chart.append(svgEl("text", {
-      x: plotRight,
-      y: 26,
-      fill: "#c9332b",
-      "text-anchor": "end",
-      class: "axis-title",
-    }, "右軸: 毎月の返済額"));
-
-    chart.append(svgEl("polyline", {
-      points: pointList(balances, balanceMax, width, padding, topPad, bottomPad),
-      class: "line-balance",
-    }));
-    chart.append(svgEl("polyline", {
-      points: pointList(payments, paymentMax, width, padding, topPad, bottomPad),
-      class: "line-payment",
-    }));
-    chart.append(svgEl("polyline", {
-      points: pointList(paidInterests, paymentMax, width, padding, topPad, bottomPad),
-      class: "line-interest",
-    }));
-
-    chart.append(svgEl("line", { x1: plotLeft, y1: 507, x2: plotLeft + 34, y2: 507, class: "line-balance" }));
-    chart.append(svgEl("text", { x: plotLeft + 42, y: 511, fill: "#1d65d8", class: "legend" }, "残高"));
-    chart.append(svgEl("line", { x1: plotLeft + 110, y1: 507, x2: plotLeft + 144, y2: 507, class: "line-payment" }));
-    chart.append(svgEl("text", { x: plotLeft + 152, y: 511, fill: "#c9332b", class: "legend" }, "返済額"));
-    chart.append(svgEl("line", { x1: plotLeft + 230, y1: 507, x2: plotLeft + 264, y2: 507, class: "line-interest" }));
-    chart.append(svgEl("text", { x: plotLeft + 272, y: 511, fill: "#b7791f", class: "legend" }, "支払利息"));
-    chart.append(svgEl("text", {
-      x: width - 18,
-      y: height - 14,
-      "text-anchor": "end",
-      fill: "#667085",
-      class: "copyright-text",
-    }, COPYRIGHT_NOTICE));
+  function pointList(values, minValue, maxValue, plot) {
+    const denom = Math.max(1, values.length - 1);
+    const span = Math.max(1, maxValue - minValue);
+    return values.map((value, index) => {
+      const x = plot.left + plot.width * index / denom;
+      const y = plot.top + plot.height * (1 - (value - minValue) / span);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(" ");
   }
 
-  function updateMetrics(rows, principal, termYears) {
-    const totalPayment = rows.reduce((sum, row) => sum + row.payment, 0);
-    const totalInterest = rows.reduce((sum, row) => sum + row.interest, 0);
-    const minPayment = Math.min(...rows.map((row) => row.scheduledPayment));
-    const maxPayment = Math.max(...rows.map((row) => row.scheduledPayment));
-    const maxUnpaidInterest = Math.max(...rows.map((row) => row.unpaidInterest));
-    const finalDebt = rows[rows.length - 1].totalDebt;
-    const items = [
-      ["借入額", yen(principal)],
-      ["借入期間", `${termYears} 年`],
-      ["総返済額", yen(totalPayment)],
-      ["総利息", yen(totalInterest)],
-      ["月返済額範囲", `${yen(minPayment)} - ${yen(maxPayment)}`],
-      ["最大未払利息", yen(maxUnpaidInterest)],
-      ["期末残債", yen(finalDebt)],
-    ];
+  function drawPanelChart(chart, width, height, panels, xLabelRows) {
+    chart.replaceChildren();
+    chart.append(svgEl("rect", { x: 0, y: 0, width, height, class: "chart-bg", rx: 8 }));
+    const left = 104;
+    const right = 76;
+    panels.forEach((panel, panelIndex) => {
+      const plot = { left, right, top: panel.top, bottom: panel.bottom };
+      plot.width = width - left - right;
+      plot.height = plot.bottom - plot.top;
+      const values = panel.series.flatMap((series) => series.values);
+      const minValue = niceMin(Math.min(...values));
+      const maxValue = niceMax(Math.max(...values));
+      const ticks = makeTicks(minValue, maxValue, 4);
+      chart.append(svgEl("text", { x: plot.left, y: plot.top - 22, class: "panel-title" }, panel.title));
+      ticks.forEach((tick) => {
+        const y = plot.top + plot.height * (1 - (tick - minValue) / Math.max(1, maxValue - minValue));
+        chart.append(svgEl("line", { x1: plot.left, y1: y, x2: width - plot.right, y2: y, class: "grid" }));
+        chart.append(svgEl("line", { x1: plot.left - 5, y1: y, x2: plot.left, y2: y, class: "axis" }));
+        chart.append(svgEl("text", { x: plot.left - 10, y: y + 4, "text-anchor": "end", class: "tick-text" }, yen(tick)));
+      });
+      chart.append(svgEl("line", { x1: plot.left, y1: plot.bottom, x2: width - plot.right, y2: plot.bottom, class: "axis" }));
+      chart.append(svgEl("line", { x1: plot.left, y1: plot.top, x2: plot.left, y2: plot.bottom, class: "axis" }));
+      panel.series.forEach((series, index) => {
+        const x = plot.left + index * 150;
+        chart.append(svgEl("polyline", { points: pointList(series.values, minValue, maxValue, plot), class: series.className }));
+        chart.append(svgEl("line", { x1: x, y1: plot.bottom + 22, x2: x + 34, y2: plot.bottom + 22, class: series.className }));
+        chart.append(svgEl("text", { x: x + 42, y: plot.bottom + 26, fill: series.color, class: "legend" }, series.label));
+      });
+      if (panelIndex === panels.length - 1 && xLabelRows.length > 0) {
+        const markerStep = xLabelRows.length > 31 ? Math.ceil((xLabelRows.length - 1) / 10) : 1;
+        xLabelRows.forEach((label, index) => {
+          const showMarker = index === 0 || index === xLabelRows.length - 1 || index % markerStep === 0;
+          if (!showMarker) return;
+          const x = plot.left + plot.width * index / Math.max(1, xLabelRows.length - 1);
+          chart.append(svgEl("text", { x, y: plot.bottom + 50, "text-anchor": "middle", class: "tick-text" }, label));
+        });
+      }
+    });
+    chart.append(svgEl("text", { x: width - 18, y: height - 14, "text-anchor": "end", fill: "#667085", class: "tick-text" }, COPYRIGHT_NOTICE));
+  }
 
-    metricsEl.replaceChildren(...items.map(([label, value]) => {
+  function renderMetrics(target, items) {
+    target.replaceChildren(...items.map(([label, value, className]) => {
       const div = document.createElement("div");
-      div.className = "metric";
+      div.className = `metric ${className || ""}`.trim();
       const span = document.createElement("span");
       span.textContent = label;
       const strong = document.createElement("strong");
@@ -907,114 +1554,286 @@
     }));
   }
 
-  function renderTables(rows) {
+  function renderLoan() {
+    const rows = currentLoanRows;
+    const totalPayment = rows.reduce((sum, row) => sum + row.payment, 0);
+    const totalInterest = rows.reduce((sum, row) => sum + row.interest, 0);
+    const minPayment = Math.min(...rows.map((row) => row.scheduledPayment));
+    const maxPayment = Math.max(...rows.map((row) => row.scheduledPayment));
+    const maxUnpaidInterest = Math.max(...rows.map((row) => row.unpaidInterest));
+    const finalDebt = rows[rows.length - 1].totalDebt;
+    renderMetrics(document.getElementById("loanMetrics"), [
+      ["借入額", yen(state.loan.principal)],
+      ["借入期間", `${state.loan.termYears} 年`],
+      ["総返済額", yen(totalPayment)],
+      ["総利息", yen(totalInterest)],
+      ["月返済額範囲", `${yen(minPayment)} - ${yen(maxPayment)}`],
+      ["最大未払利息", yen(maxUnpaidInterest)],
+      ["期末残債", yen(finalDebt), finalDebt > 1 ? "warn" : ""],
+    ]);
+    drawPanelChart(document.getElementById("loanChart"), 1120, 544, [
+      {
+        title: "ローン残高・返済額",
+        top: 56,
+        bottom: 450,
+        series: [
+          { label: "残高", values: rows.map((row) => row.totalDebt), className: "line-balance", color: "#1d65d8" },
+          { label: "返済額", values: rows.map((row) => row.scheduledPayment), className: "line-payment", color: "#c9332b" },
+          { label: "支払利息", values: rows.map((row) => row.paidCurrentInterest + row.paidUnpaidInterest), className: "line-interest", color: "#b7791f" },
+        ],
+      },
+    ], rows.map((row) => `${row.year}年`));
+
     const years = new Map();
     rows.forEach((row) => {
       if (!years.has(row.year)) years.set(row.year, []);
       years.get(row.year).push(row);
     });
-
-    yearlyRowsEl.replaceChildren(...Array.from(years.entries()).map(([year, yearRows]) => {
+    document.getElementById("loanYearlyRows").replaceChildren(...Array.from(years.entries()).map(([year, yearRows]) => {
       const first = yearRows[0];
       const last = yearRows[yearRows.length - 1];
-      const interest = yearRows.reduce((sum, row) => sum + row.interest, 0);
-      const tr = document.createElement("tr");
-      [year, `${first.annualRate.toFixed(3)}%`, yen(first.scheduledPayment), yen(interest), yen(last.balance), yen(last.unpaidInterest)].forEach((value) => {
-        const td = document.createElement("td");
-        td.textContent = value;
-        tr.append(td);
-      });
-      return tr;
+      return tr([year, `${first.annualRate.toFixed(3)}%`, yen(first.scheduledPayment), yen(yearRows.reduce((sum, row) => sum + row.interest, 0)), yen(last.balance), yen(last.unpaidInterest)]);
     }));
+    document.getElementById("loanMonthlyRows").replaceChildren(...rows.map((row) => tr([
+      row.month, row.year, `${row.annualRate.toFixed(3)}%`, yen(row.scheduledPayment), yen(row.payment), yen(row.interest), yen(row.principal), yen(row.balance), yen(row.unpaidInterest),
+    ])));
+  }
 
-    monthlyRowsEl.replaceChildren(...rows.map((row) => {
-      const tr = document.createElement("tr");
-      [
-        row.month,
-        row.year,
-        `${row.annualRate.toFixed(3)}%`,
-        yen(row.scheduledPayment),
-        yen(row.payment),
-        yen(row.interest),
-        yen(row.principal),
-        yen(row.balance),
-        yen(row.unpaidInterest),
-      ].forEach((value) => {
-        const td = document.createElement("td");
-        td.textContent = value;
-        tr.append(td);
-      });
-      return tr;
+  function assumptionRows() {
+    const years = Math.max(state.buy.maxWaitYears + state.buy.stayYears, state.loan.termYears, 1);
+    return Array.from({ length: years + 1 }, (_, year) => ({
+      year,
+      rent: annualRentAt(year),
+      home: homePriceAt(year),
+      budget: annualBudgetAt(year),
+      rentRate: year === 0 ? rateForAssumptionYear("rent", 1) : rateForAssumptionYear("rent", year),
+      homeRate: year === 0 ? rateForAssumptionYear("home", 1) : rateForAssumptionYear("home", year),
+      budgetRate: year === 0 ? rateForAssumptionYear("budget", 1) : rateForAssumptionYear("budget", year),
     }));
   }
 
-  function readInputs() {
-    const principal = Number(principalInput.value);
-    const termYears = Number(termYearsInput.value);
-    const scenario = scenarioSelect.value;
-
-    if (!Number.isFinite(principal) || principal <= 0) {
-      throw new Error("借入額は正の数で入力してください。");
+  function scenarioLabel(kind, select, value) {
+    if (select) {
+      return Array.from(select.options).find((option) => option.value === value)?.textContent ?? value;
     }
-    if (!Number.isInteger(termYears) || termYears <= 0) {
-      throw new Error("借入期間は1年以上の整数で入力してください。");
-    }
-
-    const ratePeriods = readRatePeriods();
-    const rates = expandRates(ratePeriods, termYears);
-    return { principal, termYears, rates, ratePeriods, scenario };
+    return assumptionScenarioLabels[kind]?.[value] ?? value;
   }
 
-  function recalculate() {
+  function renderAssumptions() {
+    const rows = assumptionRows();
+    const last = rows[rows.length - 1];
+    renderMetrics(document.getElementById("assumptionsMetrics"), [
+      ["家賃シナリオ", scenarioLabel("rent", els.rentScenario, state.assumptions.rentScenario)],
+      ["住宅価値シナリオ", scenarioLabel("home", els.homeScenario, state.assumptions.homeScenario)],
+      ["予算シナリオ", scenarioLabel("budget", els.budgetScenario, state.assumptions.budgetScenario)],
+      [`${last.year}年後の家賃年額`, yen(last.rent)],
+      [`${last.year}年後の住宅価値`, yen(last.home)],
+      [`${last.year}年後の年間予算`, yen(last.budget)],
+    ]);
+    drawPanelChart(document.getElementById("assumptionsChart"), 1120, 620, [
+      {
+        title: "年額フロー: 家賃 vs 住居費・貯蓄 合計予算",
+        top: 54,
+        bottom: 254,
+        series: [
+          { label: "家賃", values: rows.map((row) => row.rent), className: "line-rent", color: "#146c94" },
+          { label: "年間予算", values: rows.map((row) => row.budget), className: "line-budget", color: "#0f766e" },
+        ],
+      },
+      {
+        title: "住宅価値",
+        top: 336,
+        bottom: 520,
+        series: [
+          { label: "住宅価値", values: rows.map((row) => row.home), className: "line-home", color: "#24715d" },
+        ],
+      },
+    ], rows.map((row) => `${row.year}年`));
+    document.getElementById("assumptionsRows").replaceChildren(...rows.map((row) => tr([
+      row.year,
+      yen(row.rent),
+      yen(row.home),
+      yen(row.budget),
+      `${row.rentRate.toFixed(3)}%`,
+      `${row.homeRate.toFixed(3)}%`,
+      `${row.budgetRate.toFixed(3)}%`,
+    ])));
+  }
+
+  function renderBuy() {
+    const rows = currentBuyRows;
+    const best = rows.find((row) => row.canBuy);
+    const highestAdvantage = rows.reduce((bestRow, row) => (!bestRow || row.netAdvantage > bestRow.netAdvantage ? row : bestRow), null);
+    const firstRow = rows[0];
+    const target = best ?? highestAdvantage ?? firstRow;
+    const conditionRow = best ?? firstRow;
+    renderMetrics(document.getElementById("buyMetrics"), [
+      ["現在の住居費・貯蓄 合計予算", yen(state.buy.annualBudget)],
+      ["購入条件", best ? `${best.waitYears}年後` : "条件未達", best ? "good" : "warn"],
+      ["主な不可理由", best ? "なし" : purchaseStatus(firstRow), best ? "good" : "warn"],
+      [`${conditionRow.waitYears}年後の購入後最低余力`, yen(conditionRow.minBuyInvest), conditionRow.minBuyInvest >= 0 ? "good" : "warn"],
+      ["家賃年額", yen(target.rent)],
+      ["所有ユーザーコスト", yen(target.userCost)],
+      [`${target.waitYears}年後購入の純資産差`, signedYen(target.netAdvantage), target.netAdvantage >= 0 ? "good" : "warn"],
+      ["比較対象年", `${target.waitYears}年後`],
+    ]);
+    drawPanelChart(document.getElementById("buyChart"), 1120, 720, [
+      {
+        title: "経済性: 家賃年額 vs 所有ユーザーコスト",
+        top: 54,
+        bottom: 214,
+        series: [
+          { label: "家賃", values: rows.map((row) => row.rent), className: "line-rent", color: "#146c94" },
+          { label: "所有コスト", values: rows.map((row) => row.userCost), className: "line-own", color: "#b54708" },
+        ],
+      },
+      {
+        title: "資金: 購入時資産 vs 必要現金",
+        top: 276,
+        bottom: 436,
+        series: [
+          { label: "購入時資産", values: rows.map((row) => row.assetsAtPurchase), className: "line-asset", color: "#24715d" },
+          { label: "必要現金", values: rows.map((row) => row.requiredCash), className: "line-cash", color: "#6941c6" },
+        ],
+      },
+      {
+        title: "結果: 賃貸継続との差額",
+        top: 498,
+        bottom: 642,
+        series: [
+          { label: "純資産差", values: rows.map((row) => row.netAdvantage), className: "line-net", color: "#475467" },
+        ],
+      },
+    ], rows.map((row) => `${row.waitYears}年`));
+
+    document.getElementById("buyRows").replaceChildren(...rows.map((row) => {
+      const action = document.createElement("button");
+      action.type = "button";
+      action.className = "row-action";
+      action.textContent = "詳細";
+      action.addEventListener("click", () => {
+        state.cashflow.purchaseWaitYears = row.waitYears;
+        state.view = "cashflow";
+        recalculate(false);
+      });
+      const tableRow = tr([
+        `${row.waitYears}年後`, yen(row.annualBudget), yen(row.rent), yen(row.rentInvest), yen(row.annualHousingCash), yen(row.minBuyInvest), yen(row.assetsAtPurchase), yen(row.requiredCash), purchaseStatus(row), signedYen(row.netAdvantage),
+      ]);
+      const td = document.createElement("td");
+      td.append(action);
+      tableRow.append(td);
+      return tableRow;
+    }));
+  }
+
+  function renderCashflow() {
+    const result = currentCashflow;
+    const firstMonth = result.monthlyRows[0];
+    const minMonthlySurplus = Math.min(...result.monthlyRows.map((row) => row.monthlySurplus));
+    const finalYear = result.yearlyRows[result.yearlyRows.length - 1];
+    renderMetrics(document.getElementById("cashflowMetrics"), [
+      ["購入時期", `${result.waitYears}年後`],
+      ["購入価格", yen(result.price)],
+      ["借入額", yen(result.loan)],
+      ["初回月返済額", yen(firstMonth.loanPayment)],
+      ["最低月間余力", yen(minMonthlySurplus), minMonthlySurplus >= 0 ? "good" : "warn"],
+      ["売却後純資産", yen(result.netWorthAfterSale)],
+      ["賃貸継続との差額", signedYen(result.netAdvantageAfterSale), result.netAdvantageAfterSale >= 0 ? "good" : "warn"],
+      ["最終年純資産", yen(finalYear.netWorth)],
+    ]);
+    drawPanelChart(document.getElementById("cashflowChart"), 1120, 620, [
+      {
+        title: "月次: 返済額・月間余力",
+        top: 54,
+        bottom: 254,
+        series: [
+          { label: "ローン返済", values: result.monthlyRows.map((row) => row.loanPayment), className: "line-payment", color: "#c9332b" },
+          { label: "月間余力", values: result.monthlyRows.map((row) => row.monthlySurplus), className: "line-budget", color: "#0f766e" },
+        ],
+      },
+      {
+        title: "年次: 純資産・残債",
+        top: 336,
+        bottom: 520,
+        series: [
+          { label: "純資産", values: result.yearlyRows.map((row) => row.netWorth), className: "line-net", color: "#475467" },
+          { label: "残債", values: result.yearlyRows.map((row) => row.principalBalance), className: "line-balance", color: "#1d65d8" },
+        ],
+      },
+    ], result.yearlyRows.map((row) => `${row.year}年`));
+    document.getElementById("cashflowYearlyRows").replaceChildren(...result.yearlyRows.map((row) => tr([
+      row.year, yen(row.annualBudget), yen(row.loanPayment), yen(row.operatingCost), yen(row.surplus), yen(row.assets), yen(row.homeValue), yen(row.principalBalance), yen(row.netWorth),
+    ])));
+    document.getElementById("cashflowMonthlyRows").replaceChildren(...result.monthlyRows.map((row) => tr([
+      row.month, row.year, yen(row.monthlyBudget), yen(row.loanPayment), yen(row.operatingCost), yen(row.monthlySurplus), yen(row.principalBalance), yen(row.assets), yen(row.netWorth),
+    ])));
+  }
+
+  function tr(values) {
+    const row = document.createElement("tr");
+    values.forEach((value) => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      row.append(td);
+    });
+    return row;
+  }
+
+  function updateCashflowSelect() {
+    if (!els.cashflowPurchaseWaitYears) return;
+    const max = state.buy.maxWaitYears;
+    const current = Math.min(Math.max(0, state.cashflow.purchaseWaitYears), max);
+    state.cashflow.purchaseWaitYears = current;
+    els.cashflowPurchaseWaitYears.replaceChildren(...Array.from({ length: max + 1 }, (_, year) => {
+      const option = document.createElement("option");
+      option.value = String(year);
+      option.textContent = `${year}年後`;
+      option.selected = year === current;
+      return option;
+    }));
+  }
+
+  function updateViewVisibility() {
+    document.querySelectorAll("[data-view-button]").forEach((button) => {
+      button.setAttribute("aria-selected", String(button.dataset.viewButton === state.view));
+    });
+    document.querySelectorAll(".view").forEach((view) => view.classList.remove("active"));
+    document.getElementById(`${state.view}View`).classList.add("active");
+    els.saveCsvButton.textContent = state.view === "loan" ? "ローンCSV保存" : state.view === "assumptions" ? "前提CSV保存" : state.view === "buy" ? "購入比較CSV保存" : "CF CSV保存";
+  }
+
+  function recalculateFromInputs() {
     try {
-      const { principal, termYears, rates, scenario } = readInputs();
-      currentRows = simulateLoan(principal, termYears, rates);
-      updateMetrics(currentRows, principal, termYears);
-      drawChart(currentRows);
-      renderTables(currentRows);
-      scenarioNoteEl.textContent = scenarioDescription(scenario);
-      errorEl.textContent = "";
+      readInputsIntoState();
+      recalculate(true);
     } catch (error) {
-      errorEl.textContent = error.message;
+      els.error.textContent = error.message;
     }
   }
 
-  function applyScenario() {
+  function recalculate(skipInputSync) {
     try {
-      const termYears = Number(termYearsInput.value);
-      if (!Number.isInteger(termYears) || termYears <= 0) {
-        throw new Error("借入期間は1年以上の整数で入力してください。");
-      }
-      const scenario = scenarioSelect.value;
-      currentConfig.baseRate = scenario === "manual" ? undefined : currentManualRate();
-      if (scenario !== "manual") {
-        setRateRows(buildScenarioPeriods(scenario, termYears, currentConfig.baseRate));
-      }
-      recalculate();
+      if (!skipInputSync) setInputValues();
+      updateCashflowSelect();
+      updateViewVisibility();
+      const rates = currentRates();
+      currentLoanRows = simulateLoan(state.loan.principal, state.loan.termYears, rates);
+      currentBuyRows = simulateBuyTiming();
+      currentCashflow = simulateCashflow(state.cashflow.purchaseWaitYears);
+      renderLoan();
+      renderAssumptions();
+      renderBuy();
+      renderCashflow();
+      els.scenarioNote.textContent = scenarioDescription();
+      els.error.textContent = "";
+      syncHash();
     } catch (error) {
-      errorEl.textContent = error.message;
+      els.error.textContent = error.message;
     }
   }
 
-  function chartSvgBlob() {
-    const clone = chart.cloneNode(true);
-    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-    const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
-    style.textContent = `
-      .axis{stroke:#8a94a6;stroke-width:1;shape-rendering:crispEdges}
-      .grid{stroke:#e7ebf0;stroke-width:1;shape-rendering:crispEdges}
-      .tick-text{fill:#667085;font-size:12px;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-      .axis-title{font-size:13px;font-weight:700;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-      .legend{font-size:13px;font-weight:700;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-      .copyright-text{font-size:11px;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-      .line-balance{fill:none;stroke:#1d65d8;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
-      .line-payment{fill:none;stroke:#c9332b;stroke-width:2.5;stroke-dasharray:7 5;stroke-linejoin:round;stroke-linecap:round}
-      .line-interest{fill:none;stroke:#b7791f;stroke-width:2.25;stroke-dasharray:3 5;stroke-linejoin:round;stroke-linecap:round}
-    `;
-    clone.insertBefore(document.createComment(` ${COPYRIGHT_NOTICE} `), clone.firstChild);
-    clone.insertBefore(style, clone.firstChild);
-    const source = new XMLSerializer().serializeToString(clone);
-    return new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+  function csvBlob(lines) {
+    return new Blob([[`# ${COPYRIGHT_NOTICE}`, ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
   }
 
   function downloadBlob(blob, filename) {
@@ -1026,89 +1845,138 @@
     URL.revokeObjectURL(url);
   }
 
-  function saveSvg() {
-    downloadBlob(chartSvgBlob(), "loan_chart.svg");
-  }
-
-  function savePng() {
-    const blob = chartSvgBlob();
-    const url = URL.createObjectURL(blob);
-    const image = new Image();
-
-    image.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = 1120;
-      canvas.height = 544;
-      const context = canvas.getContext("2d");
-      context.fillStyle = "#ffffff";
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      context.drawImage(image, 0, 0);
-      URL.revokeObjectURL(url);
-      canvas.toBlob((pngBlob) => {
-        if (pngBlob) downloadBlob(pngBlob, "loan_chart.png");
-      }, "image/png");
-    };
-
-    image.src = url;
-  }
-
-  function saveCsv() {
-    const headers = [
-      "month",
-      "year",
-      "annual_rate",
-      "scheduled_payment",
-      "actual_payment",
-      "interest",
-      "principal",
-      "principal_balance",
-      "unpaid_interest",
-      "total_debt",
-    ];
-    const lines = [
-      `# ${COPYRIGHT_NOTICE}`,
-      headers.join(","),
-      ...currentRows.map((row) => [
-        row.month,
-        row.year,
-        row.annualRate.toFixed(6),
-        row.scheduledPayment.toFixed(2),
-        row.payment.toFixed(2),
-        row.interest.toFixed(2),
-        row.principal.toFixed(2),
-        row.balance.toFixed(2),
-        row.unpaidInterest.toFixed(2),
-        row.totalDebt.toFixed(2),
-      ].join(",")),
-    ];
-    downloadBlob(new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" }), "loan_schedule.csv");
-  }
-
-  addRateRowButton.addEventListener("click", () => {
-    scenarioSelect.value = "manual";
-    addRateRow();
-    recalculate();
-  });
-  scenarioSelect.addEventListener("change", applyScenario);
-  document.getElementById("updateButton").addEventListener("click", recalculate);
-  document.getElementById("savePngButton").addEventListener("click", savePng);
-  document.getElementById("saveSvgButton").addEventListener("click", saveSvg);
-  document.getElementById("saveCsvButton").addEventListener("click", saveCsv);
-  principalInput.addEventListener("input", recalculate);
-  termYearsInput.addEventListener("input", () => {
-    if (scenarioSelect.value === "manual") {
-      recalculate();
-    } else {
-      const termYears = Number(termYearsInput.value);
-      if (Number.isInteger(termYears) && termYears > 0) {
-        setRateRows(buildScenarioPeriods(scenarioSelect.value, termYears, currentConfig.baseRate ?? currentManualRate()));
-      }
-      recalculate();
+  function saveCurrentCsv() {
+    if (state.view === "loan") {
+      const headers = ["month", "year", "annual_rate", "scheduled_payment", "actual_payment", "interest", "principal", "principal_balance", "unpaid_interest", "total_debt"];
+      const lines = [headers.join(","), ...currentLoanRows.map((row) => [
+        row.month, row.year, row.annualRate.toFixed(6), row.scheduledPayment.toFixed(2), row.payment.toFixed(2), row.interest.toFixed(2), row.principal.toFixed(2), row.balance.toFixed(2), row.unpaidInterest.toFixed(2), row.totalDebt.toFixed(2),
+      ].join(","))];
+      downloadBlob(csvBlob(lines), "loan_schedule.csv");
+      return;
     }
-  });
+    if (state.view === "buy") {
+      const headers = ["wait_years", "annual_budget", "annual_rent", "rent_investment", "annual_user_cost", "home_price", "assets_at_purchase", "required_cash", "annual_housing_cash", "minimum_buy_investment", "can_buy", "purchase_status", "net_advantage"];
+      const lines = [headers.join(","), ...currentBuyRows.map((row) => [
+        row.waitYears, row.annualBudget.toFixed(2), row.rent.toFixed(2), row.rentInvest.toFixed(2), row.userCost.toFixed(2), row.price.toFixed(2), row.assetsAtPurchase.toFixed(2), row.requiredCash.toFixed(2), row.annualHousingCash.toFixed(2), row.minBuyInvest.toFixed(2), row.canBuy, purchaseStatus(row), row.netAdvantage.toFixed(2),
+      ].join(","))];
+      downloadBlob(csvBlob(lines), "buy_timing_simulation.csv");
+      return;
+    }
+    if (state.view === "assumptions") {
+      const headers = ["year", "annual_rent", "home_value", "annual_budget", "rent_rate", "home_rate", "budget_rate"];
+      const lines = [headers.join(","), ...assumptionRows().map((row) => [
+        row.year, row.rent.toFixed(2), row.home.toFixed(2), row.budget.toFixed(2), row.rentRate.toFixed(6), row.homeRate.toFixed(6), row.budgetRate.toFixed(6),
+      ].join(","))];
+      downloadBlob(csvBlob(lines), "assumptions_projection.csv");
+      return;
+    }
+    const headers = ["month", "year", "monthly_budget", "loan_payment", "operating_cost", "monthly_surplus", "principal_balance", "financial_assets", "net_worth"];
+    const lines = [headers.join(","), ...currentCashflow.monthlyRows.map((row) => [
+      row.month, row.year, row.monthlyBudget.toFixed(2), row.loanPayment.toFixed(2), row.operatingCost.toFixed(2), row.monthlySurplus.toFixed(2), row.principalBalance.toFixed(2), row.assets.toFixed(2), row.netWorth.toFixed(2),
+    ].join(","))];
+    downloadBlob(csvBlob(lines), "purchase_cashflow.csv");
+  }
 
-  initialRatePeriods.forEach((period) => addRateRow(period));
-  recalculate();
+  function bindControlEvents() {
+    if (els.addRateRowButton) els.addRateRowButton.addEventListener("click", () => {
+      state.loan.scenario = "manual";
+      els.loanScenario.value = "manual";
+      addRateRow();
+      recalculateFromInputs();
+    });
+    if (els.loanScenario) els.loanScenario.addEventListener("change", () => {
+      const currentRate = state.loan.ratePeriods[0]?.rate ?? defaultState.loan.ratePeriods[0].rate;
+      state.loan.scenario = els.loanScenario.value;
+      if (state.loan.scenario !== "manual") {
+        const termYears = els.loanTermYears ? Number(els.loanTermYears.value) : state.loan.termYears;
+        state.loan.ratePeriods = buildScenarioPeriods(state.loan.scenario, termYears, currentRate);
+        setRateRows(state.loan.ratePeriods);
+      }
+      recalculateFromInputs();
+    });
+    [
+      ["rent", els.addRentRowButton],
+      ["home", els.addHomeRowButton],
+      ["budget", els.addBudgetRowButton],
+    ].forEach(([kind, button]) => {
+      if (!button) return;
+      button.addEventListener("click", () => {
+        assumptionConfig(kind).scenario.value = "manual";
+        addAssumptionRow(kind);
+        recalculateFromInputs();
+      });
+    });
+    [els.rentScenario, els.homeScenario, els.budgetScenario].filter(Boolean).forEach((select) => {
+      select.addEventListener("change", () => {
+        const kind = select === els.rentScenario ? "rent" : select === els.homeScenario ? "home" : "budget";
+        if (select.value !== "manual") {
+          const periods = clone(assumptionScenarioTemplates[kind][select.value]);
+          setAssumptionRows(kind, periods);
+        }
+        recalculateFromInputs();
+      });
+    });
+    if (els.cashflowPurchaseWaitYears) els.cashflowPurchaseWaitYears.addEventListener("change", recalculateFromInputs);
+    [
+      els.buyAssets, els.buyReturnRate, els.buyMonthlyRent,
+      els.buyEmergencyFund, els.buyAnnualBudget,
+      els.buyTaxRate, els.buyMaintenanceRate, els.buyInsuranceRate, els.buyBuyCostRate,
+      els.buySellCostRate, els.buyStayYears, els.buyMaxWaitYears,
+    ].filter(Boolean).forEach((input) => input.addEventListener("input", recalculateFromInputs));
+    [els.buyHomePrice, els.buyDownPaymentRate].filter(Boolean).forEach((input) => {
+      input.addEventListener("input", () => {
+        try {
+          syncPrincipalFromPurchaseInputs();
+          recalculateFromInputs();
+        } catch (error) {
+          els.error.textContent = error.message;
+        }
+      });
+    });
+    if (els.loanPrincipal) els.loanPrincipal.addEventListener("input", () => {
+      try {
+        syncDownPaymentFromPrincipalInput();
+        recalculateFromInputs();
+      } catch (error) {
+        els.error.textContent = error.message;
+      }
+    });
+    if (els.loanTermYears) els.loanTermYears.addEventListener("input", () => {
+      if (els.loanScenario && els.loanScenario.value !== "manual") {
+        const currentRate = state.loan.ratePeriods[0]?.rate ?? defaultState.loan.ratePeriods[0].rate;
+        state.loan.ratePeriods = buildScenarioPeriods(els.loanScenario.value, Number(els.loanTermYears.value), currentRate);
+        setRateRows(state.loan.ratePeriods);
+      }
+      recalculateFromInputs();
+    });
+  }
+
+  function bindEvents() {
+    document.querySelectorAll("[data-view-button]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.view = button.dataset.viewButton;
+        recalculate(false);
+      });
+    });
+    document.getElementById("recalculateButton").addEventListener("click", recalculateFromInputs);
+    els.saveCsvButton.addEventListener("click", saveCurrentCsv);
+    window.addEventListener("hashchange", () => {
+      suppressHashUpdate = true;
+      try {
+        state = loadStateFromHash();
+        renderedControlView = "";
+        setInputValues();
+        recalculate(true);
+      } finally {
+        suppressHashUpdate = false;
+      }
+    });
+  }
+
+  state = loadStateFromHash();
+  setInputValues();
+  bindEvents();
+  recalculate(true);
 </script>
 </body>
 </html>
